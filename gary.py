@@ -15,7 +15,7 @@ except:
 bot = discord.Bot()
 
 # Then we start to load in all of the selected cogs in the cogs folder.
-cogs_to_load = ["ping"]
+cogs_to_load = ["ping", "burn", "help"]
 
 if __name__ == '__main__':
     for cog in cogs_to_load:
@@ -89,7 +89,7 @@ async def on_application_command_error(ctx, event):
 
         await ctx.respond(f"You can't do that yet! Try again in{days_output}{hours_output}{minutes_output}{seconds_output}!")
     else:
-        print(f"\nSomething went wrong, this message:\nSender: {ctx.message.author.name}\nMessage: {ctx.message.content}\nCaused this error:\n{event}")
+        print(f"\nSomething caused this error:\n{event}")
     
 
 bot.run(env.token)
