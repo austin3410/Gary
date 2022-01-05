@@ -1,18 +1,19 @@
 from discord.commands import slash_command  # Importing the decorator that makes slash commands.
 from discord.ext import commands
-from discord.ext.commands.core import command, cooldown
-from discord.ext.commands.help import HelpCommand
+from math import floor
 
 
 class Ping(commands.Cog):
+    # Inits the bot instance so we can do things like send messages and get other Discord information.
     def __init__(self, bot):
         self.bot = bot
 
     @slash_command(name="ping", guild_ids=[389818215871676418], description="This makes sure Gary is listening.")
-    #@cooldown(1, 30)
     async def ping(self, ctx):
-        return await ctx.respond(":ping_pong:")
+        # Multiplies the float value of the bots latency bu 1000 to get a whole number.
+        latency = floor(self.bot.latency * 1000)
+        return await ctx.respond(f":ping_pong: at {latency}ms ping.")
 
-
+# Standard bot setup.
 def setup(bot):
     bot.add_cog(Ping(bot))
