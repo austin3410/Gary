@@ -60,7 +60,11 @@ class Help(commands.Cog):
                 if c.description == "No description provided" or c.description is None or c.description == "":
                     print(f"No help or description attribute for {c.name}! Stop being lazy and add one!")
             
-            await interaction.user.send(help_str)
+            help_msg = f"```This is the help for the {c.name}{interaction_values[1]}\n" \
+                        f"########################\n" \
+                        f"{help_str}\n" \
+                        f"########################```"
+            await interaction.user.send(help_msg)
         
         # Adds the help_callback to the options menu.
         options.callback = help_callback

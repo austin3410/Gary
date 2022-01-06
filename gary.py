@@ -13,9 +13,12 @@ except:
 
 # Then we establish that we are using the discord.Bot lib.
 bot = discord.Bot()
+bot.id = env.id
+bot.token = env.token
+bot.gif_token = env.gif_token
 
 # Then we start to load in all of the selected cogs in the cogs folder.
-cogs_to_load = ["ping", "burn", "help"]
+cogs_to_load = ["ping", "burn", "help", "yesno", "quote", "mock"]
 
 if __name__ == '__main__':
     for cog in cogs_to_load:
@@ -92,4 +95,4 @@ async def on_application_command_error(ctx, event):
         print(f"\nSomething caused this error:\n{event}")
     
 
-bot.run(env.token)
+bot.run(bot.token)
