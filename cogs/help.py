@@ -13,8 +13,6 @@ class Help(commands.Cog):
     @slash_command(name="help", guild_ids=[389818215871676418], description="Use this to learn about Gary!", help="You're looking at it!")
     #@cooldown(1, 30)
     async def help(self, ctx):
-        # Deletes the initial interaction since we won't be needing it and if we don't the interaction will timeout and fail.
-        await ctx.delete()
 
         # Creates the Select Menu framework.
         options = Select(placeholder="Select one of the commands listed..")
@@ -60,11 +58,10 @@ class Help(commands.Cog):
                 if c.description == "No description provided" or c.description is None or c.description == "":
                     print(f"No help or description attribute for {c.name}! Stop being lazy and add one!")
             
-            help_msg = f"```This is the help for the {c.name}{interaction_values[1]}\n" \
+            help_msg = f"```Help - {c.name}{interaction_values[1]}\n" \
                         f"########################\n" \
-                        f"{help_str}\n" \
-                        f"########################```"
-            await interaction.user.send(help_msg)
+                        f"{help_str}```"
+            await interaction.response.send_message(help_msg, ephemeral=True, delete_after=60)
         
         # Adds the help_callback to the options menu.
         options.callback = help_callback
@@ -74,7 +71,7 @@ class Help(commands.Cog):
         view.add_item(options)
         
         # Send the initial help command and the View with the selction menu.
-        await ctx.author.send("Which command do you need help with?", view=view)
+        await ctx.respond("Which command do you need help with?", view=view, ephemeral=True)
 
 # Standard cog setup.
 def setup(bot):
