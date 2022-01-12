@@ -13,8 +13,6 @@ import random
 import os
 import json
 
-from youtube_dl.utils import TV_PARENTAL_GUIDELINES
-
 from files.BBTCG.check_achievements import CheckAchievements
 
 class BBTCG(commands.Cog):
