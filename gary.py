@@ -18,7 +18,7 @@ bot.token = env.token
 bot.gif_token = env.gif_token
 
 # Then we start to load in all of the selected cogs in the cogs folder.
-cogs_to_load = ["ping", "burn", "help", "yesno", "quote", "mock", "music"]
+cogs_to_load = ["ping", "burn", "help", "yesno", "quote", "mock", "music", "bbtcg"]
 
 if __name__ == '__main__':
     for cog in cogs_to_load:
@@ -93,6 +93,9 @@ async def on_application_command_error(ctx, event):
         await ctx.respond(f"You can't do that yet! Try again in{days_output}{hours_output}{minutes_output}{seconds_output}!")
     else:
         print(f"\nSomething caused this error:\n{event}")
-    
+        traceback.print_exc()
+
+def reload_cog(cog_name):
+    bot.reload_extension(cog_name)
 
 bot.run(bot.token)

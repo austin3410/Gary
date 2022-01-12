@@ -2,9 +2,7 @@ import discord
 from discord.commands import slash_command, message_command
 from discord.commands.commands import Option  # Importing the decorator that makes slash commands.
 from discord.ext import commands
-from random import random
-from random import seed
-from random import randint
+from random import random, randint
 import os
 import datetime
 
@@ -41,7 +39,6 @@ class Mock(commands.Cog):
         if len(orig) <= 1:
             return (orig.upper() if (random() < cap_chance) else orig.lower())
         else:
-            seed(orig)
 
             spongecase = []
             for ch in orig:
@@ -54,8 +51,7 @@ class Mock(commands.Cog):
     def check_time(self, epoch):
         if os.path.isfile("files//mock_time.txt"):
             with open("files//mock_time.txt", "r") as file:
-                last_time = file.read()
-                last_time = float(last_time)
+                last_time = float(file.read())
 
             time_diff = (datetime.datetime.utcnow() - epoch).total_seconds() - last_time
             #print(f"last_time: {last_time}\ntime_diff: {time_diff}\nepoch: {epoch}")
@@ -97,7 +93,6 @@ class Mock(commands.Cog):
             return
         if str(ctx.author.id) != str(self.bot.id) and not ctx.author.bot:
             x = randint(1, 100)
-            x = 69
             if x == 69:
                 time_check = self.check_time(epoch)
                 if time_check == True:

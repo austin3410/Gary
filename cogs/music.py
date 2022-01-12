@@ -12,14 +12,11 @@ e.g You might like to implement a vote before skipping the song or only allow ad
 Music bots require lots of work, and tuning. Goodluck.
 If you find any bugs feel free to ping me on discord. @Eviee#0666
 """
-import re
 import discord
 from discord.ext import commands
 
 from discord.commands import slash_command  # Importing the decorator that makes slash commands.
 from discord.commands.commands import Option
-from discord.interactions import Interaction
-from discord.types.components import ButtonStyle
 from discord.ui import View, Button, Select
 
 import asyncio
@@ -28,10 +25,7 @@ import sys
 import traceback
 from async_timeout import timeout
 from functools import partial
-from discord.player import FFmpegAudio, FFmpegPCMAudio
 from youtube_dl import YoutubeDL
-import os
-import math
 
 
 ytdlopts = {
@@ -54,35 +48,6 @@ ffmpegopts = {
 }
 
 ytdl = YoutubeDL(ytdlopts)
-
-
-def get_size(start_path='.'):
-    total_size = 0
-    for dirpath, dirnames, filenames in os.walk(start_path):
-        for f in filenames:
-            fp = os.path.join(dirpath, f)
-            # skip if it is symbolic link
-            if not os.path.islink(fp):
-                total_size += os.path.getsize(fp)
-
-    return total_size
-
-def cache_cleanup():
-    downloads_dir = "downloads"
-    size = get_size(downloads_dir), "bytes"
-    if int(size[0]) > 1000000000:
-        oldest = oldest_file_in_tree(downloads_dir)
-        os.remove(oldest)
-    else:
-        pass
-
-def oldest_file_in_tree(rootfolder, extension=".webm"):
-    return min(
-        (os.path.join(dirname, filename)
-         for dirname, dirnames, filenames in os.walk(rootfolder)
-         for filename in filenames
-         if filename.endswith(extension)),
-        key=lambda fn: os.stat(fn).st_mtime)
 
 class VoiceConnectionError(commands.CommandError):
     """Custom Exception class for connection errors."""
@@ -125,8 +90,6 @@ class YTDLSource(discord.PCMVolumeTransformer):
         embed.set_author(name=f"Song Requested By: {ctx.author.name}")
 
         await ctx.send(embed=embed, delete_after=15)
-
-        """await ctx.send(f'```ini\n[Added {data["title"]} to the Queue.]\n```', delete_after=15)"""
 
         if download:
             source = ytdl.prepare_filename(data)
@@ -363,8 +326,6 @@ class Music(commands.Cog):
         cc = await self.channel_check(ctx)
         if cc is False:
             return
-
-        cache_cleanup()
 
         if not channel:
             try:
