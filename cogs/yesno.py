@@ -24,25 +24,28 @@ class Yesno(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, ctx):
         if ctx.content.startswith(f"<@!{self.bot.id}>"):
+            try:
 
-            # This should be all or at least most of the words that start a question.
-            valid_kwords = ["DID", "SHOULD", "WILL", "CAN", "ARE", "IS", "AM", "CAN'T", "COULD", "DOES", "HAS", "HAVE", "WERE", "WOULD", "DO"]
-            m = str(ctx.content).split(" ")
-            kword = m[1]
+                # This should be all or at least most of the words that start a question.
+                valid_kwords = ["DID", "SHOULD", "WILL", "CAN", "ARE", "IS", "AM", "CAN'T", "CANT", "COULD", "DOES", "HAS", "HAVE", "WERE", "WOULD", "DO"]
+                m = str(ctx.content).split(" ")
+                kword = m[1]
 
-            # Checks to see if the first word of the message contains any of the valid_keywords.
-            # If not, it's probably not a question.
-            if kword.upper() in valid_kwords:
-                x = randint(1,101)
-                if x < 50:
-                    gif = self.get_gif("yes")
-                    await ctx.channel.send(f"YES!\n{str(gif)}")
-                elif x >= 50 and x <= 90:
-                    gif = self.get_gif("no")
-                    await ctx.channel.send(f"NO!\n{str(gif)}")
-                elif x >= 91:
-                    gif = self.get_gif("i don't care")
-                    await ctx.channel.send(f"¯\_(ツ)_/¯\nI DON'T CARE!\n{str(gif)}")
+                # Checks to see if the first word of the message contains any of the valid_keywords.
+                # If not, it's probably not a question.
+                if kword.upper() in valid_kwords:
+                    x = randint(1,101)
+                    if x < 50:
+                        gif = self.get_gif("yes")
+                        await ctx.channel.send(f"YES!\n{str(gif)}")
+                    elif x >= 50 and x <= 90:
+                        gif = self.get_gif("no")
+                        await ctx.channel.send(f"NO!\n{str(gif)}")
+                    elif x >= 91:
+                        gif = self.get_gif("i don't care")
+                        await ctx.channel.send(f"¯\_(ツ)_/¯\nI DON'T CARE!\n{str(gif)}")
+            except:
+                pass
 
 # Standard bot setup.
 def setup(bot):
