@@ -71,7 +71,7 @@ class Mock(commands.Cog):
                 file.write(str(new_time))
 
     # MOCK slash command
-    @slash_command(name="mock", guild_ids=[389818215871676418], description="This converts a sentence to SpongeBob Mock case.")
+    @slash_command(name="mock", description="This converts a sentence to SpongeBob Mock case.")
     async def mock(self, ctx, sentence: Option(str, "Enter any sentence", required=True)):
         if sentence == " " or sentence == "":
             raise Exception("is a required argument that is missing")
@@ -79,7 +79,7 @@ class Mock(commands.Cog):
         await ctx.respond(final)
     
     # MOCK message command
-    @message_command(name="Mock", guild_ids=[389818215871676418], help="This converts a previously sent message to SpongeBob Mock case.")
+    @message_command(name="Mock Sentence", help="This converts a previously sent message to SpongeBob Mock case.")
     async def Mock(self, ctx, message: discord.Message):
         if message.content == " " or message.content == "":
             raise Exception("is a required argument that is missing")

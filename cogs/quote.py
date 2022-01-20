@@ -8,7 +8,7 @@ class Quote(commands.Cog):
         self.bot = bot
 
     # Pretty simple command that just opens a file, randomly picks and line and sends it. Nothing too complicated.
-    @slash_command(name="quote", guild_ids=[389818215871676418], description="This sends a random quote from SpongeBob!")
+    @slash_command(name="quote", description="This sends a random quote from SpongeBob!")
     async def quote(self, ctx):
         with open("files//spongebob_quotes.txt", "r") as file:
             quotes = file.read().splitlines()

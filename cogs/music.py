@@ -313,7 +313,7 @@ class Music(commands.Cog):
 
         return player
 
-    #@slash_command(name="summon", guild_ids=[389818215871676418], description="Joins Gary to your current voice channel.")
+    #@slash_command(name="summon", description="Joins Gary to your current voice channel.")
     async def connect_(self, ctx, *, channel: discord.VoiceChannel=None):
         """Connect to voice.
         Parameters
@@ -351,7 +351,7 @@ class Music(commands.Cog):
             except asyncio.TimeoutError:
                 raise VoiceConnectionError(f'Connecting to channel: <{channel}> timed out.')
 
-    @slash_command(name="play", guild_ids=[389818215871676418], description="Plays a song or radio station.")
+    @slash_command(name="play", description="Plays a song or radio station.")
     async def stream_(self, ctx, search: Option(str, description="Song name or YouTube URL.")):
         try:
             channel = ctx.author.voice.channel
@@ -424,7 +424,7 @@ class Music(commands.Cog):
 
         await player.queue.put(source)
 
-    @slash_command(name="queue", guild_ids=[389818215871676418], description="Shows what's to play next.")
+    @slash_command(name="queue", description="Shows what's to play next.")
     async def queue_info(self, ctx):
         """Retrieve a basic queue of upcoming songs."""
         cc = await self.channel_check(ctx)

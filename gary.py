@@ -3,6 +3,8 @@ import sys
 import traceback
 from discord.ext import commands
 import config
+import logging
+import pickle
 
 # First we load the environment classes which hold the token and id of the different Gary bots.
 try:
@@ -12,6 +14,7 @@ except:
     env = config.PRODUCTION()
 
 # Then we establish that we are using the discord.Bot lib.
+logging.basicConfig(level=logging.WARNING)
 bot = discord.Bot()
 bot.id = env.id
 bot.token = env.token
@@ -37,6 +40,27 @@ async def on_ready():
     for c in channels:
         if c.name == "admin-log":
             bot.admin_log = c
+    
+    command_helps = {}
+    for command in bot.commands:
+        if command.default_permission == False:
+            continue
+
+        if "SlashCommandGroup" in str(command):
+            #command_helps = {**command_helps, command.name: {"description": command.description, "type": "SlashCommandGroup"}}
+            for c in command.subcommands:
+                command_helps = {**command_helps, c.name: {"description": c.description, "parent": command.name, "type": "SlashCommand"}}
+
+        elif "SlashCommand" in str(command):
+            command_helps = {**command_helps, command.name: {"description": command.description, "type": "SlashCommand"}}
+
+        elif "UserCommand" in str(command):
+            command_helps = {**command_helps, command.name: {"description": command.__dict__["__original_kwargs__"]["help"], "type": "UserCommand"}}
+
+        elif "MessageCommand" in str(command):
+            command_helps = {**command_helps, command.name: {"description": command.__dict__["__original_kwargs__"]["help"], "type": "MessageCommand"}}
+    
+    bot.command_helps = command_helps
 
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
           "~ Thanks for using Gary! ~\n"
@@ -90,12 +114,9 @@ async def on_application_command_error(ctx, event):
         else:
             seconds_output = f" {seconds_left} seconds"
 
-        await ctx.respond(f"You can't do that yet! Try again in{days_output}{hours_output}{minutes_output}{seconds_output}!")
+        await ctx.respond(f"You can't do that yet! Try again in{days_output}{hours_output}{minutes_output}{seconds_output}!", ephemeral=True)
     else:
         print(f"\nSomething caused this error:\n{event}")
         traceback.print_exc()
-
-def reload_cog(cog_name):
-    bot.reload_extension(cog_name)
 
 bot.run(bot.token)

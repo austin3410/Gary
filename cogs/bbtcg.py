@@ -310,9 +310,9 @@ class BBTCG(commands.Cog):
 
         await ctx.respond(f"<@{ctx.user.id}> congrats on the draw!", embed=embed)
 
-        await self.check_for_achievements(user)
+        await self.check_for_achievements(user, ctx)
     
-    async def check_for_achievements(self, user):
+    async def check_for_achievements(self, user, ctx=None):
         cc = CheckAchievements()
         attrs = (getattr(cc, name) for name in dir(cc))
         achievement_list = filter(inspect.ismethod, attrs)
@@ -338,7 +338,10 @@ class BBTCG(commands.Cog):
                         embed.add_field(name=payload["name"], value=payload["description"], inline=False)
                         embed.add_field(name="Reward", value=f"${payload['reward']}", inline=False)
                         disc_user = await self.bot.fetch_user(int(user["id"]))
-                        await disc_user.send(embed=embed)
+                        if ctx == None:
+                            await disc_user.send(embed=embed)
+                        else:
+                            await ctx.respond(embed=embed, ephemeral=True)
                 elif payload == False:
                     pass
             except Exception as e:
@@ -386,13 +389,13 @@ class BBTCG(commands.Cog):
 ################################################################################################
 
     # DRAW command - Picks a random card from the available card pool and awards it to the user.
-    @slash_command(name="draw", guild_ids=[389818215871676418], description="Draws a card for BBTCG!")
+    @slash_command(name="draw", description="Draws a card for BBTCG!", help="This draws a BBTCG card for you. Can be used once per hour.")
     @cooldown(1, 3600, commands.BucketType.user)
     async def bbtcg_draw(self, message):
         await self.draw_card(message)
     
     # PRINT USER Command
-    @user_command(name="BBTCG Print", guild_ids=[389818215871676418], help="Prints out a users BBTCG profile.")
+    @user_command(name="BBTCG Print", help="Prints out a users BBTCG profile.")
     @permissions.has_role("Admins")
     async def bbtcg_print(self, ctx, member: Option(discord.Member, description="Target user ID.")):
         user = self.load_user(member.id)
@@ -404,14 +407,15 @@ class BBTCG(commands.Cog):
         return os.remove(temp_file_path)
     
     # AUTO MARKET Command
-    @slash_command(name="automarket", guild_ids=[389818215871676418], description="Renews the current BBTCG market offerings.")
+    @slash_command(name="automarket", description="Renews the current BBTCG market offerings.")
     @permissions.has_role("Admins")
     async def bbtcg_auto_market(self, message):
         await self.auto_market()
         return await message.respond("Market renewed.", ephemeral=True, delete_after=3)
     
     # ACHIEVEMENTS command - Send the user a list of all of their earned achievements.
-    @slash_command(name="achievements", guild_ids=[389818215871676418], description="Shows you your current BBTCG Achievements.")
+    @slash_command(name="achievements", description="Shows you your current BBTCG Achievements.", 
+    help="achievements - ~This shows you all of the BBTCG Achievements you've earned so far this game.\nAchievements reset when a new game starts.")
     async def bbtcg_achievements(self, message):
         user = self.load_user(message.author.id)
 
@@ -461,7 +465,8 @@ class BBTCG(commands.Cog):
 
         
     # INVENTORY command - Used by a user to check what cards they have and how much $ they have.
-    @slash_command(name="inventory", guild_ids=[389818215871676418], description="Send you your current BBTCG inventory.")
+    @slash_command(name="inventory", description="Send you your current BBTCG inventory.",
+    help="inventory - This shows you your current BBTCG inventory. This includes:\nCards (and all the information about your cards)\nHow much cash you have.\nYour total card value.\nYour total account value.")
     async def bbtcg_inventory(self, message):
         # Loads or creates a user.
         user = self.load_user(message.author.id)
@@ -517,7 +522,8 @@ class BBTCG(commands.Cog):
         await message.respond(msg, ephemeral=True)
     
     # INSPECT command - Sends the card that is specified.
-    @slash_command(name="inspect", guild_ids=[389818215871676418], description="This sends you the card you request, if you have it.")
+    @slash_command(name="inspect", description="This sends you the card you request, if you have it.",
+    help="inspect <card no> - This will generate the specified card itself and send it in the current channel.")
     async def bbtcg_inspect(self, message, cardno: Option(int, description="Card no.")):
         # Loads user to check if they own the card.
         user = self.load_user(message.author.id)
@@ -532,7 +538,7 @@ class BBTCG(commands.Cog):
         return await message.respond(f"<@{message.author.id}>, you don't own that card!")
 
 
-    market = SlashCommandGroup("market", "BBTCG commands related to the market.", guild_ids=[389818215871676418])
+    market = SlashCommandGroup("market", "All commands related to the BBTCG market.", [389818215871676418])
     
     @market.command(description="Shows the BBTCG market.")
     async def show(self, ctx):
@@ -634,7 +640,7 @@ class BBTCG(commands.Cog):
         buyer["market_stats"]["cards_purchased"] = buyer["market_stats"]["cards_purchased"] + 1
         saved_buyer = self.save_user(buyer)
         seller["market_stats"]["cards_sold"] = seller["market_stats"]["cards_sold"] + 1
-        await self.check_for_achievements(buyer)
+        await self.check_for_achievements(buyer, ctx)
         if seller["id"] != 0:
             await self.check_for_achievements(seller)
         
@@ -715,17 +721,17 @@ class BBTCG(commands.Cog):
         if saved_user != True or saved_cards != True:
             return print("Something went wrong with scrapping a card.")
         else:
-            await self.check_for_achievements(user)
+            await self.check_for_achievements(user, ctx)
             return await ctx.respond(f"<@{ctx.author.id}>, I've scrapped your card and awarded you ${scrap_price}!")
     
     # UNEQUIP command - Removes a user from a card role.
-    @slash_command(name="unequip", guild_ids=[389818215871676418], description="Unequips a BBTCG card.")
+    @slash_command(name="unequip", description="Unequips a BBTCG card.")
     async def bbtcg_unequip(self, ctx, cardno: Option(int, description="Card No.", Required=True)):
         await self.unequip(ctx, cardno, internal=False)
         return await ctx.respond("Card unequipped.", delete_after=3, ephemeral=True)
 
     # EQUIP command - Adds a user to a card role.
-    @slash_command(name="equip", guild_ids=[389818215871676418], description="Equips a BBTCG card to your profile.")
+    @slash_command(name="equip", description="Equips a BBTCG card to your profile.")
     async def bbtcg_equip(self, message, cardno: Option(int, description="Card no.")):
         cc = await self.channel_check(message, "bbtcg")
         if cc == False:
@@ -818,7 +824,7 @@ class BBTCG(commands.Cog):
         await guild.edit_role_positions(positions=bulk_position_update)
     
     # SLOTS command - Adds a user to a card role.
-    @slash_command(name="slots", guild_ids=[389818215871676418], description="Plays 10 rounds of slots for BBTCG cash! Use in #slots.")
+    @slash_command(name="slots", description="Plays 10 rounds of slots for BBTCG cash! Use in #slots.")
     @cooldown(1, 300, commands.BucketType.user)
     async def bbtcg_slots(self, message):
         cc = await self.channel_check(message, "slots")
@@ -923,14 +929,14 @@ class BBTCG(commands.Cog):
                 return await thread.send(f"You played slots {spun} times and lost ${str(earnings)[1:]}")
     
     # CASH command - Prints the amount of cash a player has.
-    @slash_command(name="cash", guild_ids=[389818215871676418], description="Shows you your current BBTCG cash.")
+    @slash_command(name="cash", description="Shows you your current BBTCG cash.")
     async def bbtcg_cash(self, message):
         user = self.load_user(message.author.id)
 
         await message.respond(f"You have **${user['money']}**.", ephemeral=True)
     
     # STATS command - Command to see the status of the current game.
-    @slash_command(name="stats", guild_ids=[389818215871676418], description="Shows you the current BBTCG game's standings.")
+    @slash_command(name="stats", description="Shows you the current BBTCG game's standings.")
     async def bbtcg_stats(self, message):
         # Checks for the correct channel.
         cc = await self.channel_check(message, "bbtcg")
@@ -1008,7 +1014,7 @@ class BBTCG(commands.Cog):
         return await message.respond(embed=embed)
 
      # STORE command - Opens a store menu to purchase things.
-    @slash_command(name="store", guild_ids=[389818215871676418], description="Starts the BBTCG store.")
+    @slash_command(name="store", description="Starts the BBTCG store.")
     @cooldown(5, 3600, commands.BucketType.user)
     async def bbtcg_store(self, ctx):
         
@@ -1124,7 +1130,7 @@ class BBTCG(commands.Cog):
             saved_user = self.save_user(user)
 
             # Checks for earned achievements.
-            await self.check_for_achievements(user)
+            await self.check_for_achievements(user, ctx)
 
             if saved_user != True:
                 print("Something went wrong. Was unable to save user in store - draw a card.")
@@ -1205,7 +1211,7 @@ class BBTCG(commands.Cog):
                 print(user)
                 print(target_card)
             else:
-                await self.check_for_achievements(user)
+                await self.check_for_achievements(user, ctx)
             
             # Generates an embed to let the server know that someone stole a card!
             embed = self.generate_card(target_card)

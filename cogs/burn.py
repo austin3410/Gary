@@ -16,7 +16,7 @@ class Burn(commands.Cog):
             return burn
 
     # Formats a randomly selected burn and responds to the request.
-    @user_command(name="Burn", guild_ids=[389818215871676418], help="Burns another user!")
+    @user_command(name="Burn", help="Burns another user!")
     async def burn(self, ctx, member: Option(discord.Member, "The member you want to burn!", required=True)):
         burn = self.select_burn()
 

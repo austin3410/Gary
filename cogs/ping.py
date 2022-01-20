@@ -9,7 +9,7 @@ class Ping(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @slash_command(name="ping", guild_ids=[389818215871676418], description="This makes sure Gary is listening.")
+    @slash_command(name="ping", description="This makes sure Gary is listening.")
     async def ping(self, ctx):
         # Multiplies the float value of the bots latency bu 1000 to get a whole number.
         latency = floor(self.bot.latency * 1000)
