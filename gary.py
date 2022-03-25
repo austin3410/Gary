@@ -4,7 +4,6 @@ import traceback
 from discord.ext import commands
 import config
 import logging
-import pickle
 
 # First we load the environment classes which hold the token and id of the different Gary bots.
 try:
@@ -14,14 +13,14 @@ except:
     env = config.PRODUCTION()
 
 # Then we establish that we are using the discord.Bot lib.
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.WARNING, filename="gary.log", filemode="a", format='%(asctime)s:%(levelname)8s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 bot = discord.Bot()
 bot.id = env.id
 bot.token = env.token
 bot.gif_token = env.gif_token
 
 # Then we start to load in all of the selected cogs in the cogs folder.
-cogs_to_load = ["ping", "burn", "help", "yesno", "quote", "mock", "music", "bbtcg", "meow"]
+cogs_to_load = ["ping", "burn", "help", "yesno", "quote", "mock", "music", "bbtcg", "meow", "subscribe"]
 
 if __name__ == '__main__':
     for cog in cogs_to_load:

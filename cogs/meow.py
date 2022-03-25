@@ -9,8 +9,9 @@ class Meow(commands.Cog):
     async def on_message(self, message):
         if str(message.author.id) != str(self.bot.id):
             nicknames = ["GARY", "GARE", "GARE BEAR", self.bot.id]
-            if (name for name in nicknames if name in message.content.upper()):
+            if [name for name in nicknames if name in message.content.upper()]:
                 return await message.channel.send("Meow.")
+                
 
 def setup(bot):
     bot.add_cog(Meow(bot))
