@@ -58,7 +58,7 @@ class Subscription(commands.Cog):
 
 
     # SUBSCRIBE command
-    @slash_command(name="subscribe", guild_ids=[389818215871676418], description="Allows you to subscribe to spoiler channels. Use /listsubs for more info.")
+    @slash_command(name="subscribe", description="Allows you to subscribe to spoiler channels. Use /listsubs for more info.")
     async def subscribe(self, ctx, channel: Option(str, autocomplete=subscribe_autocomplete, description="Which channel would you like to subscribe to?")):
         if ctx.channel.name != self.target_how_to_name:
             return await ctx.respond(f"Please subscribe to a channel in the '{self.target_how_to_name}' channel.", delete_after=10)
@@ -74,7 +74,7 @@ class Subscription(commands.Cog):
         return await ctx.respond(f"I couldn't find **{channel}**, are you sure you spelled it correctly?", delete_after=10)
     
     # UNSUBSCRIBE command
-    @slash_command(name="unsubscribe", guild_ids=[389818215871676418], description="Allows you to unsubscribe from a spoiler channel.")
+    @slash_command(name="unsubscribe", description="Allows you to unsubscribe from a spoiler channel.")
     async def unsubscribe(self, ctx, channel: Option(str, autocomplete=unsubscribe_autocomplete, description="Which channel would you like to unsubscribe from?")):
         if ctx.channel.name != self.target_how_to_name:
             return await ctx.respond(f"Please unsubscribe from a channel in the '{self.target_how_to_name}' channel.", delete_after=20)
@@ -90,7 +90,7 @@ class Subscription(commands.Cog):
         return await ctx.respond(f"I couldn't find **{channel}**, are you sure you spelled it correctly?", delete_after=10)
     
     # LISTSUBS command
-    @slash_command(name="listsubs", guild_ids=[389818215871676418], description="Shows you all of the channels you can subscribe to.")
+    @slash_command(name="listsubs", description="Shows you all of the channels you can subscribe to.")
     async def listsubs(self, ctx):
         if ctx.channel.name != self.target_how_to_name:
             await ctx.respond(f"Please requests all subs in the '{self.target_how_to_name}' channel.", delete_after=10)
