@@ -1057,6 +1057,12 @@ class BBTCG(commands.Cog):
             store_draw_card_label = "No Cards to Draw"
             store_draw_card_style = discord.ButtonStyle.grey
             store_draw_card_disabled = True
+        
+        elif int(draw_card_price) > int(user["money"]):
+            store_draw_card_label = f"Draw a Card - ${draw_card_price}"
+            store_draw_card_style = discord.ButtonStyle.grey
+            store_draw_card_disabled = True
+        
         else:
             store_draw_card_label = f"Draw a Card - ${draw_card_price}"
             store_draw_card_style = discord.ButtonStyle.blurple
@@ -1066,6 +1072,12 @@ class BBTCG(commands.Cog):
             random_steal_price_label = "No Stealable Cards"
             random_steal_price_style = discord.ButtonStyle.grey
             random_steal_price_disabled = True
+        
+        elif int(random_steal_price) > int(user["money"]):
+            random_steal_price_label = f"Steal a Card - ${random_steal_price}"
+            random_steal_price_style = discord.ButtonStyle.grey
+            random_steal_price_disabled = True
+        
         else:
             random_steal_price_label = f"Steal a Card - ${random_steal_price}"
             random_steal_price_style = discord.ButtonStyle.danger

@@ -20,7 +20,7 @@ bot.token = env.token
 bot.gif_token = env.gif_token
 
 # Then we start to load in all of the selected cogs in the cogs folder.
-cogs_to_load = ["ping", "burn", "help", "yesno", "quote", "mock", "music", "bbtcg", "meow", "subscribe"]
+cogs_to_load = ["ping", "burn", "yesno", "quote", "mock", "music", "bbtcg", "meow", "subscribe", "help"]
 
 if __name__ == '__main__':
     for cog in cogs_to_load:
@@ -40,6 +40,7 @@ async def on_ready():
         if c.name == "admin-log":
             bot.admin_log = c
     
+    # This constructs all the background info for the help command.
     command_helps = {}
     for command in bot.commands:
         if command.default_permission == False:
