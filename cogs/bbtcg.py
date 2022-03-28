@@ -1,6 +1,6 @@
 import asyncio
 import inspect
-from discord.commands.commands import Option, option
+from discord.commands import Option, option
 from discord.ext import commands
 from discord.commands import slash_command, user_command, permissions, SlashCommandGroup
 from discord.ext.commands import cooldowns  # Importing the decorator that makes slash commands.

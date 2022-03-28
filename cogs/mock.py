@@ -1,6 +1,6 @@
 import discord
 from discord.commands import slash_command, message_command
-from discord.commands.commands import Option  # Importing the decorator that makes slash commands.
+from discord.commands import Option  # Importing the decorator that makes slash commands.
 from discord.ext import commands
 from random import random, randint
 import os
