@@ -395,7 +395,7 @@ class BBTCG(commands.Cog):
         await self.draw_card(message)
     
     # PRINT USER Command
-    @user_command(name="BBTCG Print", help="Prints out a users BBTCG profile.")
+    @user_command(name="BBTCG Print", help="Prints out a users BBTCG profile.", description_localization="Same")
     @permissions.has_role("Admins")
     async def bbtcg_print(self, ctx, member: Option(discord.Member, description="Target user ID.")):
         user = self.load_user(member.id)
