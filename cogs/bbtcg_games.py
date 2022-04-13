@@ -115,7 +115,7 @@ class BBTCG_Games(commands.Cog):
             return view.value
 
     # TIC TAC TOE - Slash command
-    @slash_command(name="tictactoe", description="Play a game of TicTacToe against other players for BBTCG Cash!", guild_ids=[389818215871676418])
+    @slash_command(name="tictactoe", description="Play a game of TicTacToe against other players for BBTCG Cash!")
     @check(before_invoke_channel_check)
     async def tictactoe(self, ctx, against: Option(discord.User, "You do you want to play against?"), bet: Option(int, "How much BBTCG cash are you betting?")):
 
