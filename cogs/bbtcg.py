@@ -4,7 +4,7 @@ from discord.commands import Option, option
 from discord.ext import commands
 from discord.commands import slash_command, user_command, permissions, SlashCommandGroup
 from discord.ext.commands import cooldowns  # Importing the decorator that makes slash commands.
-from discord.ext.commands.core import command, cooldown
+from discord.ext.commands.core import command, cooldown, check
 from discord.ui import Button, View
 from datetime import datetime, timedelta
 import discord
@@ -381,6 +381,16 @@ class BBTCG(commands.Cog):
                 return await ctx.respond("You don't have that card equipped!", ephemeral=True)
         
         return await ctx.author.remove_roles(role_to_unequip)
+    
+    # This is a channel check that occurs before the command is invoked
+    # which prevents unintentional cooldowns.
+    def before_invoke_channel_check(ctx):
+            if str(ctx.channel.type) == "private":
+                return False
+            if ctx.command.name == "slots":
+                return ctx.channel.name == "games"
+            elif ctx.command.name == "store" or ctx.command.name == "draw":
+                return ctx.channel.name == "bbtcg"
 
 
 
@@ -389,13 +399,14 @@ class BBTCG(commands.Cog):
 ################################################################################################
 
     # DRAW command - Picks a random card from the available card pool and awards it to the user.
-    @slash_command(name="draw", description="Draws a card for BBTCG!", help="This draws a BBTCG card for you. Can be used once per hour.")
+    @slash_command(name="draw", description="Draws a card for BBTCG! Use in #bbtcg", help="This draws a BBTCG card for you. Can be used once per hour. Use in #bbtcg")
+    @check(before_invoke_channel_check)
     @cooldown(1, 3600, commands.BucketType.user)
     async def bbtcg_draw(self, message):
         await self.draw_card(message)
     
     # PRINT USER Command
-    @user_command(name="BBTCG Print", help="Prints out a users BBTCG profile.", description_localization="Same")
+    @user_command(name="BBTCG Print", help="Prints out a users BBTCG profile.")
     @permissions.has_role("Admins")
     async def bbtcg_print(self, ctx, member: Option(discord.Member, description="Target user ID.")):
         user = self.load_user(member.id)
@@ -825,11 +836,9 @@ class BBTCG(commands.Cog):
     
     # SLOTS command - Adds a user to a card role.
     @slash_command(name="slots", description="Plays 10 rounds of slots for BBTCG cash! Use in #slots.")
+    @check(before_invoke_channel_check)
     @cooldown(1, 300, commands.BucketType.user)
     async def bbtcg_slots(self, message):
-        cc = await self.channel_check(message, "slots")
-        if cc == False:
-            return
         
         thread = await message.channel.create_thread(name=f"{message.author.name}'s Slots Match", type=discord.ChannelType.public_thread)
         await message.delete()
@@ -1014,7 +1023,8 @@ class BBTCG(commands.Cog):
         return await message.respond(embed=embed)
 
      # STORE command - Opens a store menu to purchase things.
-    @slash_command(name="store", description="Starts the BBTCG store.")
+    @slash_command(name="store", description="Opens the BBTCG store. Use in #bbtcg")
+    @check(before_invoke_channel_check)
     @cooldown(5, 3600, commands.BucketType.user)
     async def bbtcg_store(self, ctx):
         

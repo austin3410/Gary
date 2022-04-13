@@ -115,7 +115,11 @@ async def on_application_command_error(ctx, event):
             seconds_output = f" {seconds_left} seconds"
 
         await ctx.respond(f"You can't do that yet! Try again in{days_output}{hours_output}{minutes_output}{seconds_output}!", ephemeral=True)
+    
+    elif "CheckFailure" in str(type(event)):
+        await ctx.respond(f"Please use this command in the correct channel!", ephemeral=True)
     else:
+        print(type(event))
         print(f"\nSomething caused this error:\n{event}")
         traceback.print_exc()
 
