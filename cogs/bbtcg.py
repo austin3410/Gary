@@ -974,7 +974,6 @@ class BBTCG(commands.Cog):
                         all_user_cards.append(c)
                 except:
                     print(user)
-        
         total_user_cards = len(all_user_cards)
         richest_player = None
         most_cards_player = None
@@ -983,15 +982,13 @@ class BBTCG(commands.Cog):
                 if richest_player == None:
                     richest_player = player
                 else:
-                    if player["money"] > richest_player["money"]:
+                    if int(player["money"]) > int(richest_player["money"]):
                         richest_player = player
-
                 if most_cards_player == None and len(player["inventory"]) > 0:
                     most_cards_player = player
-                else:
+                elif most_cards_player != None:
                     if len(player["inventory"]) > len(most_cards_player["inventory"]):
                         most_cards_player = player
-
         # Gets the Discord users so we can retrieve their current names.
         guild = message.channel.guild
         if richest_player != None:
