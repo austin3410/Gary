@@ -858,7 +858,7 @@ class BBTCG(commands.Cog):
             earnings -= 5
 
             # This is the main logic for the game.
-            possible_slots = [":shell:", ":hamburger:", ":ice_cream:", ":pineapple:", ":crab:", ":sponge:", ":snail:", ":octopus:"]
+            possible_slots = [":shell:", ":ice_cream:", ":pineapple:", ":crab:", ":sponge:", ":snail:", ":octopus:"]
 
             roll1 = random.choice(possible_slots)
             roll2 = random.choice(possible_slots)
