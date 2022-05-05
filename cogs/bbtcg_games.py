@@ -45,7 +45,7 @@ class BBTCG_Games(commands.Cog):
     def before_invoke_channel_check(ctx):
         if str(ctx.channel.type) == "private":
             return False
-        if ctx.command.name == "tictactoe":
+        if ctx.command.name == "tictactoe" or ctx.command.name == "connect4":
             return ctx.channel.name == "games"
     
     # This handles inviting someone to play a game.
@@ -117,7 +117,7 @@ class BBTCG_Games(commands.Cog):
     # TIC TAC TOE - Slash command
     @slash_command(name="tictactoe", description="Play a game of TicTacToe against other players for BBTCG Cash!")
     @check(before_invoke_channel_check)
-    async def tictactoe(self, ctx, against: Option(discord.User, "You do you want to play against?"), bet: Option(int, "How much BBTCG cash are you betting?")):
+    async def tictactoe(self, ctx, against: Option(discord.User, "Who do you want to play against?"), bet: Option(int, "How much BBTCG cash are you betting?")):
 
         # Sets player1 as the Guest (who goes first) and player2 as the host (who started the game).
         player2 = ctx.author

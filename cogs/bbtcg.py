@@ -843,11 +843,11 @@ class BBTCG(commands.Cog):
         thread = await message.channel.create_thread(name=f"{message.author.name}'s Slots Match", type=discord.ChannelType.public_thread)
         await message.delete()
 
-        user = self.load_user(message.author.id)
         earnings = 0
         spins = 10
         spun = 0
         for x in range(spins):
+            user = self.load_user(message.author.id)
             # Loads the user and makes sure they have enough money to play.
             if user["money"] < 5:
                 await thread.send("You don't have enough money to keep playing slots. The buyin is $5!")
@@ -856,6 +856,9 @@ class BBTCG(commands.Cog):
             # Subtracts the buy in amount from the user and saves the user.
             user["money"] = user["money"] - 5
             earnings -= 5
+            user_saved = self.save_user(user)
+            if user_saved != True:
+                return print("Something went wrong. Unable to save user in slots.")
 
             # This is the main logic for the game.
             possible_slots = [":shell:", ":ice_cream:", ":pineapple:", ":crab:", ":sponge:", ":snail:", ":octopus:"]
@@ -884,7 +887,7 @@ class BBTCG(commands.Cog):
             # SPINNING ANIMATION DISABLED DUE TO PERFORMANCE
 
             final_msg = f"{roll1} {roll2} {roll3} - "
-
+            user = self.load_user(message.author.id)
             # Tries to find a match.
             trio_roll = [":crab:", ":sponge:", ":snail:", ":octopus:"]
             roll_list = []
@@ -922,20 +925,19 @@ class BBTCG(commands.Cog):
                 await thread.send(f"{final_msg}\nYou unfortunately didn't get anything, you should try again.")
             
             spun += 1
+            user_saved = self.save_user(user)
+            if user_saved != True:
+                return print("Something went wrong. Unable to save user in slots.")
             await asyncio.sleep(1)
 
 
         # Saves the user with their new winnings.
-        user_saved = self.save_user(user)
-        if user_saved != True:
-            return print("Something went wrong. Unable to save user in slots.")
+        if earnings > 0:
+            return await thread.send(f"You played slots {spun} times and made ${earnings}!")
+        elif earnings == 0:
+            return await thread.send(f"You played slots {spun} times and came out even ¯\_(ツ)_/¯")
         else:
-            if earnings > 0:
-                return await thread.send(f"You played slots {spun} times and made ${earnings}!")
-            elif earnings == 0:
-                return await thread.send(f"You played slots {spun} times and came out even ¯\_(ツ)_/¯")
-            else:
-                return await thread.send(f"You played slots {spun} times and lost ${str(earnings)[1:]}")
+            return await thread.send(f"You played slots {spun} times and lost ${str(earnings)[1:]}")
     
     # CASH command - Prints the amount of cash a player has.
     @slash_command(name="cash", description="Shows you your current BBTCG cash.")
