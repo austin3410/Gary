@@ -13,7 +13,7 @@ class Help(commands.Cog):
         return [c for c in self.bot.command_helps if str(c).startswith(ctx.value.lower())]
 
     # The main help slash command.
-    @slash_command(name="help", description="You're looking at it!")
+    @slash_command(name="help", description="You're looking at it!", guild_ids=[389818215871676418])
     async def help(self, ctx, command: Option(str, description="Which command do you need help with?", autocomplete=command_autocomplete, required=False)):
         help_str = "```"
 

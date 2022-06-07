@@ -7,6 +7,7 @@ from discord.ext.commands import cooldowns  # Importing the decorator that makes
 from discord.ext.commands.core import command, cooldown, check
 from discord.ui import Button, View
 from datetime import datetime, timedelta
+from discord import default_permissions
 import discord
 import pickle
 import random
@@ -407,7 +408,7 @@ class BBTCG(commands.Cog):
     
     # PRINT USER Command
     @user_command(name="BBTCG Print", help="Prints out a users BBTCG profile.")
-    @permissions.has_role("Admins")
+    @default_permissions(administrator=True)
     async def bbtcg_print(self, ctx, member: Option(discord.Member, description="Target user ID.")):
         user = self.load_user(member.id)
         temp_file_path = f"files//BBTCG//{member.name}.json"
@@ -419,7 +420,7 @@ class BBTCG(commands.Cog):
     
     # AUTO MARKET Command
     @slash_command(name="automarket", description="Renews the current BBTCG market offerings.")
-    @permissions.has_role("Admins")
+    @default_permissions(administrator=True)
     async def bbtcg_auto_market(self, message):
         await self.auto_market()
         return await message.respond("Market renewed.", ephemeral=True, delete_after=3)
