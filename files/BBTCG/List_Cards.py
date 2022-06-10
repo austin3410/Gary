@@ -23,3 +23,5 @@ print(leg_count)
 print(epic_count)
 print(rare_count)
 print(common_count)
+total_count = leg_count + epic_count + rare_count + common_count
+print("Total: " + str(total_count))

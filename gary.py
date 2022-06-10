@@ -62,7 +62,6 @@ async def on_ready():
             command_helps = {**command_helps, command.name: {"description": command.__dict__["__original_kwargs__"]["help"], "type": "MessageCommand"}}
     
     bot.command_helps = command_helps
-    print(bot.command_helps)
 
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
           "~ Thanks for using Gary! ~\n"

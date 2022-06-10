@@ -13,7 +13,7 @@ class Help(commands.Cog):
         return [c for c in self.bot.command_helps if str(c).startswith(ctx.value.lower())]
 
     # The main help slash command.
-    @slash_command(name="help", description="You're looking at it!", guild_ids=[389818215871676418])
+    @slash_command(name="help", description="You're looking at it!")
     async def help(self, ctx, command: Option(str, description="Which command do you need help with?", autocomplete=command_autocomplete, required=False)):
         help_str = "```"
 
@@ -39,7 +39,7 @@ class Help(commands.Cog):
                 
                 # This checks to see if the message has reached Discords message char limit.
                 # If so, it sends what it has and form a new message for the remaining help texts.
-                if len(help_str) >= 1950:
+                if len(help_str) >= 1900:
                     help_str += "```"
                     await ctx.respond(help_str, ephemeral=True)
                     help_str = "```"

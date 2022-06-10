@@ -7,12 +7,13 @@ from discord.ext.commands import cooldowns  # Importing the decorator that makes
 from discord.ext.commands.core import command, cooldown, check
 from discord.ui import Button, View
 from datetime import datetime, timedelta
-from discord import default_permissions
+from discord import SelectOption, default_permissions
 import discord
 import pickle
 import random
 import os
 import json
+from datetime import datetime, timedelta
 
 from files.BBTCG.check_achievements import CheckAchievements
 
@@ -22,6 +23,7 @@ class BBTCG(commands.Cog):
         self.client = client
         self.bot = client
         self.BBTCGdir = "files//BBTCG//"
+        self._buckets = [commands.BucketType.user]
 
     
     # AUTO MARKET Reset
@@ -124,7 +126,7 @@ class BBTCG(commands.Cog):
                 os.makedirs(self.BBTCGdir + "users//")
             with open(self.BBTCGdir + f"users//{uid}.pickle", "wb") as file:
                 user = {"id": uid, "inventory": [], "money": 50, "earned_achievements": [], "shop_stats": {"cards_purchased": 0, "steals_purchased": 0, "cards_stolen": []},
-                        "market_stats": {"cards_purchased": 0, "cards_sold": 0, "cards_scrapped": 0}, "slots_stats": {"slots_played": 0}}
+                        "market_stats": {"cards_purchased": 0, "cards_sold": 0, "cards_scrapped": 0}, "slots_stats": {"slots_played": 0, "time_since_played_last": 0}}
                 pickle.dump(user, file)
                 return user
     
@@ -836,33 +838,33 @@ class BBTCG(commands.Cog):
         await guild.edit_role_positions(positions=bulk_position_update)
     
     # SLOTS command - Adds a user to a card role.
-    @slash_command(name="slots", description="Plays 10 rounds of slots for BBTCG cash! Use in #slots.")
+    @slash_command(name="slots", description="Plays slots for BBTCG cash! Use in #slots.")
     @check(before_invoke_channel_check)
     @cooldown(1, 300, commands.BucketType.user)
-    async def bbtcg_slots(self, message):
+    async def bbtcg_slots(self, message, spins: Option(int, description="How many spins would you like? Defaults to 10.", min_value=1, max_value=20, default=10, required=False)):
+
+        user = self.load_user(message.author.id)
+        buy_in = 5 * spins
+        # Loads the user and makes sure they have enough money to play.
+        if user["money"] < buy_in:
+            self.bot.get_application_command("slots").reset_cooldown(message)
+            return await message.respond(f"You don't have enough money to play slots {spins} times!")
+        else:
+            user["money"] -= buy_in
         
         thread = await message.channel.create_thread(name=f"{message.author.name}'s Slots Match", type=discord.ChannelType.public_thread)
         await message.delete()
+        
+        user_saved = self.save_user(user)
+        if user_saved != True:
+            return print("Something went wrong. Unable to save user in slots.")
 
         earnings = 0
-        spins = 10
         spun = 0
         for x in range(spins):
-            user = self.load_user(message.author.id)
-            # Loads the user and makes sure they have enough money to play.
-            if user["money"] < 5:
-                await thread.send("You don't have enough money to keep playing slots. The buyin is $5!")
-                break
-
-            # Subtracts the buy in amount from the user and saves the user.
-            user["money"] = user["money"] - 5
-            earnings -= 5
-            user_saved = self.save_user(user)
-            if user_saved != True:
-                return print("Something went wrong. Unable to save user in slots.")
 
             # This is the main logic for the game.
-            possible_slots = [":shell:", ":ice_cream:", ":pineapple:", ":crab:", ":sponge:", ":snail:", ":octopus:"]
+            possible_slots = [":shell:", ":ice_cream:", ":pineapple:", ":crab:", ":sponge:", ":snail:", ":octopus:", ":hamburger:"]
 
             roll1 = random.choice(possible_slots)
             roll2 = random.choice(possible_slots)
@@ -899,46 +901,56 @@ class BBTCG(commands.Cog):
             if roll1 == roll2 == roll3:
                 if roll1 in [":sponge:", ":snail:", ":octopus:", ":crab:"]:
                     # 40 times payout!
-                    user["money"] = user["money"] + 205
-                    earnings += 205
+                    earnings += 200
                     await thread.send(f"{final_msg}\nYou just nailed a 40x payout of **$200** by getting a three of a kind with SpongeBob characters! :moneybag:")
                 else:
                     # 20 times payout!
-                    user["money"] = user["money"] + 105
-                    earnings += 105
+                    earnings += 100
                     await thread.send(f"{final_msg}\nYou just nabbed a 20x payout of **$100** by getting a three of a kind! :dollar:")
             elif len(roll_list) == 3:
                 # 8 times payout!
-                user["money"] = user["money"] + 45
-                earnings += 45
+                earnings += 40
                 await thread.send(f"{final_msg}\nYou just scored an 8x payout of **$40** by getting a trio of SpongeBob characters! :coin:")
             elif roll1 == roll2 or roll2 == roll3:
                 # 3 times payout!
-                user["money"] = user["money"] + 20
-                earnings += 20
+                earnings += 15
                 await thread.send(f"{final_msg}\nYou just grabbed a 3x payout of **$15** by getting two in a row!")
             elif ":sponge:" in [roll1, roll2, roll3]:
                 # 0.1 times payout.
-                user["money"] = user["money"] + 1
                 earnings += 1
                 await thread.send(f"{final_msg}\nYou got a sponge and **$1** of your buy-in back.")
             else:
                 await thread.send(f"{final_msg}\nYou unfortunately didn't get anything, you should try again.")
             
             spun += 1
-            user_saved = self.save_user(user)
-            if user_saved != True:
-                return print("Something went wrong. Unable to save user in slots.")
             await asyncio.sleep(1)
+        
+        user = self.load_user(message.author.id)
+        user["money"] += earnings
 
-
+        net = earnings - buy_in
         # Saves the user with their new winnings.
-        if earnings > 0:
-            return await thread.send(f"You played slots {spun} times and made ${earnings}!")
-        elif earnings == 0:
-            return await thread.send(f"You played slots {spun} times and came out even ¯\_(ツ)_/¯")
+        if net > 0:
+            await thread.send(f"You played slots {spun} times and made ${net}!")
+        elif net == 0:
+            await thread.send(f"You played slots {spun} times and came out even ¯\_(ツ)_/¯")
         else:
-            return await thread.send(f"You played slots {spun} times and lost ${str(earnings)[1:]}")
+            await thread.send(f"You played slots {spun} times and lost ${str(net)[1:]}")
+        
+        try:
+            last_played = user["slots_stats"]["time_since_last_played"]
+        except:
+            user["slots_stats"]["time_since_last_played"] = 0
+            last_played = user["slots_stats"]["time_since_last_played"]
+            
+        if last_played == 0 or last_played < datetime.now() - timedelta(days=1):
+            user["slots_stats"]["time_since_last_played"] = datetime.now()
+            await thread.send(f":tada: You just got $300 from your daily bonus!")
+            user["money"] = user["money"] + 300
+        
+        user_saved = self.save_user(user)
+        if user_saved != True:
+            return print("Something went wrong. Unable to save user in slots.")
     
     # CASH command - Prints the amount of cash a player has.
     @slash_command(name="cash", description="Shows you your current BBTCG cash.")
@@ -1032,20 +1044,22 @@ class BBTCG(commands.Cog):
         user = self.load_user(ctx.author.id)
         cards = self.load_cards()
 
-        # Calculates the draw_card_price by multipling the average value of all remaining cards by 1.75.
+        # Calculates the draw_card_price by multipling the average value of all remaining cards by 1.1.
         if len(cards) > 0:
             draw_card_price = 0
             for c in cards:
                 draw_card_price = draw_card_price + c["value"]
 
-            draw_card_price = round((draw_card_price // len(cards)) * 1.75)
+            draw_card_price = round((draw_card_price // len(cards)) * 1.1)
         else:
             draw_card_price = "DISABLE"
 
-        # Calculates the steal_card_price by multiplying the average value of all player owned cards by 2.5.
+        # Calculates the steal_card_price by multiplying the average value of all player owned cards by 1.25.
         user_card_value = 0
         user_card_count = 0
         user_files = os.listdir(self.BBTCGdir + "users//")
+        # This list is used when displaying targeted stealable accounts.
+        stealable_users = []
         for user_file in user_files:
             if user_file == "0.pickle":
                 pass
@@ -1053,6 +1067,7 @@ class BBTCG(commands.Cog):
                 temp_user = self.load_user(user_file.replace(".pickle", ""))
                 if len(temp_user["inventory"]) <= 1 or temp_user["id"] == user["id"]:
                     continue
+                stealable_users.append(temp_user)
                 for c in temp_user["inventory"]:
                     user_card_value = user_card_value + c["value"]
                     user_card_count += 1
@@ -1060,7 +1075,7 @@ class BBTCG(commands.Cog):
         if user_card_value == 0:
             random_steal_price = "DISABLE"
         else:
-            random_steal_price = round((user_card_value // user_card_count) * 2.5)
+            random_steal_price = round((user_card_value // user_card_count) * 1.25)
 
         # This preps all of the variables for the store buttons.
         if draw_card_price == "DISABLE":
@@ -1092,6 +1107,11 @@ class BBTCG(commands.Cog):
             random_steal_price_label = f"Steal a Card - ${random_steal_price}"
             random_steal_price_style = discord.ButtonStyle.danger
             random_steal_price_disabled = False
+        
+        if stealable_users == []:
+            targeted_steal_list_disabled = True
+        else:
+            targeted_steal_list_disabled = False
 
         # This is the Store class which houses the button functions.
         class Store(discord.ui.View):
@@ -1126,14 +1146,36 @@ class BBTCG(commands.Cog):
                     self.clear_items()
                     await interaction.response.edit_message(content="Thanks for the purchase!", view=self)
                     self.stop()
+            
+            @discord.ui.select(disabled=targeted_steal_list_disabled, options=[discord.SelectOption(label="Select to load targets..", value="load")], placeholder="Select a user to steal from...")
+            async def store_targeted_steal_card(self, view: discord.ui.Select, interaction: discord.Interaction):
+                
+                if view._selected_values[0] == "load":
+                    for user in stealable_users:
+                        temp_discord_user = await interaction.channel.guild.fetch_member(user["id"])
+                        user_card_count = 0
+                        user_card_value = 0
+                        for c in user["inventory"]:
+                            user_card_value += c["value"]
+                            user_card_count += 1
+                        description = f"${round(user_card_value // user_card_count)}"
+                        view.add_option(label=str(temp_discord_user.name), value=str(temp_discord_user.id), description=str(description))
+                    
+                    await interaction.response.edit_message(view=view)
+                else:
+                    print(view._selected_values[0])
+                
+                
 
         # Establishes the Store class as a view.
         view = Store()
 
+
         # Preps the store menu message and sends it along with the view.
         store_msg = f"============\nBBTCG Store\nYou have **${user['money']}**! You can either:\n" \
                     "`Draw a card immediately without using your cooldown.`\n" \
-                    "`Steal a random card from a random player. (equipped cards are safe)`\n"
+                    "`Steal a random card from a random player. (equipped cards are safe)`\n" \
+                    "`Select a user from the list to steal a random card from them.`\n"
         await ctx.respond(store_msg, view=view, ephemeral=True)
 
         # This waits until the view is registered as finished (when self.stop() is called.) or the view reached its Timeout.
