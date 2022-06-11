@@ -844,16 +844,33 @@ class BBTCG(commands.Cog):
     async def bbtcg_slots(self, message, spins: Option(int, description="How many spins would you like? Defaults to 10.", min_value=1, max_value=20, default=10, required=False)):
 
         user = self.load_user(message.author.id)
+
+        try:
+            last_played = user["slots_stats"]["time_since_last_played"]
+        except:
+            user["slots_stats"]["time_since_last_played"] = 0
+            last_played = user["slots_stats"]["time_since_last_played"]
+            
+        if last_played == 0 or last_played < datetime.now() - timedelta(days=1):
+            user["slots_stats"]["time_since_last_played"] = datetime.now()
+            await message.respond(f":tada: You just got $200 for your daily bonus! :tada:", ephemeral=True)
+            user["money"] = user["money"] + 200
+
+            user_saved = self.save_user(user)
+            if user_saved != True:
+                return print("Something went wrong. Unable to save user in slots.")
+            user = self.load_user(message.author.id)
+        
+        await message.delete()
+
         buy_in = 5 * spins
+        thread = await message.channel.create_thread(name=f"{message.author.name}'s Slots Match", type=discord.ChannelType.public_thread)
         # Loads the user and makes sure they have enough money to play.
         if user["money"] < buy_in:
             self.bot.get_application_command("slots").reset_cooldown(message)
-            return await message.respond(f"You don't have enough money to play slots {spins} times!")
+            return await thread.send(f"You don't have enough money to play slots {spins} times! Don't worry, your cooldown wasn't triggered.")
         else:
             user["money"] -= buy_in
-        
-        thread = await message.channel.create_thread(name=f"{message.author.name}'s Slots Match", type=discord.ChannelType.public_thread)
-        await message.delete()
         
         user_saved = self.save_user(user)
         if user_saved != True:
@@ -936,17 +953,6 @@ class BBTCG(commands.Cog):
             await thread.send(f"You played slots {spun} times and came out even ¯\_(ツ)_/¯")
         else:
             await thread.send(f"You played slots {spun} times and lost ${str(net)[1:]}")
-        
-        try:
-            last_played = user["slots_stats"]["time_since_last_played"]
-        except:
-            user["slots_stats"]["time_since_last_played"] = 0
-            last_played = user["slots_stats"]["time_since_last_played"]
-            
-        if last_played == 0 or last_played < datetime.now() - timedelta(days=1):
-            user["slots_stats"]["time_since_last_played"] = datetime.now()
-            await thread.send(f":tada: You just got $300 from your daily bonus!")
-            user["money"] = user["money"] + 300
         
         user_saved = self.save_user(user)
         if user_saved != True:
@@ -1050,7 +1056,7 @@ class BBTCG(commands.Cog):
             for c in cards:
                 draw_card_price = draw_card_price + c["value"]
 
-            draw_card_price = round((draw_card_price // len(cards)) * 1.1)
+            draw_card_price = round((draw_card_price // len(cards)) * 1.15)
         else:
             draw_card_price = "DISABLE"
 
@@ -1130,7 +1136,7 @@ class BBTCG(commands.Cog):
                 if user["money"] < draw_card_price:
                     await ctx.respond("You don't have enough cash for that!", ephemeral=True)
                 else:
-                    self.value = "DRAW"
+                    self.value = {"action": "DRAW"}
                     self.clear_items()
                     await interaction.response.edit_message(content="Thanks for the purchase!", view=self)
                     self.stop()
@@ -1142,7 +1148,7 @@ class BBTCG(commands.Cog):
                 if user["money"] < random_steal_price:
                     await ctx.respond("You don't have enough cash for that!", ephemeral=True)
                 else:
-                    self.value = "STEAL"
+                    self.value = {"action": "STEAL"}
                     self.clear_items()
                     await interaction.response.edit_message(content="Thanks for the purchase!", view=self)
                     self.stop()
@@ -1151,19 +1157,30 @@ class BBTCG(commands.Cog):
             async def store_targeted_steal_card(self, view: discord.ui.Select, interaction: discord.Interaction):
                 
                 if view._selected_values[0] == "load":
-                    for user in stealable_users:
-                        temp_discord_user = await interaction.channel.guild.fetch_member(user["id"])
+                    view.options = []
+                    for stealable_user in stealable_users:
                         user_card_count = 0
                         user_card_value = 0
-                        for c in user["inventory"]:
+                        for c in stealable_user["inventory"]:
                             user_card_value += c["value"]
                             user_card_count += 1
-                        description = f"${round(user_card_value // user_card_count)}"
-                        view.add_option(label=str(temp_discord_user.name), value=str(temp_discord_user.id), description=str(description))
+                        targeted_steal_price = round((user_card_value // user_card_count) * 1.5)
+                        if user["money"] < targeted_steal_price:
+                            continue
+                        description = f"${targeted_steal_price}"
+                        temp_discord_user = await interaction.channel.guild.fetch_member(stealable_user["id"])
+                        view.add_option(label=str(temp_discord_user.name), value=str(temp_discord_user.id) + " " + str(targeted_steal_price), description=str(description))
                     
-                    await interaction.response.edit_message(view=view)
+                    await interaction.response.edit_message(view=self)
                 else:
-                    print(view._selected_values[0])
+                    # Checks if the user has enough cash.
+                    if user["money"] < random_steal_price:
+                        await ctx.respond("You don't have enough cash for that!", ephemeral=True)
+                    
+                    self.value = {"action": "TARGETED_STEAL", "user": str(view._selected_values[0]).split(" ")[0], "price": str(view._selected_values[0]).split(" ")[1]}
+                    self.clear_items()
+                    await interaction.response.edit_message(content="Thanks for the purchase!", view=self)
+                    self.stop()
                 
                 
 
@@ -1173,9 +1190,9 @@ class BBTCG(commands.Cog):
 
         # Preps the store menu message and sends it along with the view.
         store_msg = f"============\nBBTCG Store\nYou have **${user['money']}**! You can either:\n" \
-                    "`Draw a card immediately without using your cooldown.`\n" \
-                    "`Steal a random card from a random player. (equipped cards are safe)`\n" \
-                    "`Select a user from the list to steal a random card from them.`\n"
+                    "`1. Draw a card immediately without using your cooldown.`\n" \
+                    "`2. Steal a random card from a random player. (equipped cards are safe)`\n" \
+                    "`3. Select a user from the list to steal a random card from them. (equipped cards are safe)`\n"
         await ctx.respond(store_msg, view=view, ephemeral=True)
 
         # This waits until the view is registered as finished (when self.stop() is called.) or the view reached its Timeout.
@@ -1186,7 +1203,7 @@ class BBTCG(commands.Cog):
             # None generally means the view reached its timeout and did nothing.
             pass
 
-        elif view.value == "DRAW":
+        elif view.value["action"] == "DRAW":
             
             # Subtracts the purchase price from the user and adjusts their stats.
             user["money"] = user["money"] - draw_card_price
@@ -1198,15 +1215,16 @@ class BBTCG(commands.Cog):
 
             if saved_user != True:
                 print("Something went wrong. Was unable to save user in store - draw a card.")
-            await self.draw_card(ctx)
+            return await self.draw_card(ctx)
         
-        elif view.value == "STEAL":
+        elif view.value["action"] == "STEAL":
 
             # Picks a random user and random card from the user.
             valid_target_cards = []
 
             # Loads previously created roles.
             created_roles = self.load_roles()
+
             for user_file in user_files:
                 
                 # Ensure the user doesn't steal a card from themselves.
@@ -1246,17 +1264,17 @@ class BBTCG(commands.Cog):
             # This shouldn't happen but just incase, there's a catch for it.
             if valid_target_cards == []:
                 return await ctx.respond("I wasn't able to find any valid cards to steal! Maybe try again later. You weren't charged.", ephemeral=True)
-            
+
             # Actually picks the card to steal.
             stolen_card_info = random.choice(valid_target_cards)
             target_card = stolen_card_info["target_card"]
             target_user = stolen_card_info["target_user"]
-            
+
             # Subtracts the purchase price from the user and adjusts their stats.
             user["money"] = user["money"] - random_steal_price
             user["shop_stats"]["steals_purchased"] = user["shop_stats"]["steals_purchased"] + 1
             user["shop_stats"]["cards_stolen"].append(target_card["num"])
-            
+
             # Removes the card from the random_target.
             target_user["inventory"].remove(target_card)
             saved_target = self.save_user(target_user)
@@ -1266,7 +1284,7 @@ class BBTCG(commands.Cog):
                 print(target_card)
             else:
                 await self.check_for_achievements(target_user)
-            
+
             # Adds the card to the users inventory.
             user["inventory"].append(target_card)
             saved_user = self.save_user(user)
@@ -1280,6 +1298,78 @@ class BBTCG(commands.Cog):
             # Generates an embed to let the server know that someone stole a card!
             embed = self.generate_card(target_card)
             return await ctx.respond(f"<@{ctx.author.id}>, just stole a card from <@{target_user['id']}>:", embed=embed)
+        
+        elif view.value["action"] == "TARGETED_STEAL":
+
+            # Picks a random user and random card from the user.
+            valid_target_cards = []
+
+            # Loads previously created roles.
+            created_roles = self.load_roles()
+            
+            # Loads the target to extract card information.
+            target_user = self.load_user(view.value["user"])
+            
+            for c in target_user["inventory"]:
+                
+                # Checks if the card even has a role associated to it.
+                c_role = next((item for item in created_roles if item["card"] == c), None)
+                
+                # If it does, check to make sure it's not equipped by the target user.
+                # This makes equiped cards safe.
+                if c_role != None:
+                    target_discord_user = await ctx.channel.guild.fetch_member(int(target_user["id"]))
+                    target_discord_user_role_ids = []
+                    for role in target_discord_user.roles:
+                        target_discord_user_role_ids.append(role.id)
+                    if int(c_role["id"]) in target_discord_user_role_ids:
+                        continue
+                    else:
+                        valid_target_card = {"target_user": target_user, "target_card": c}
+                        valid_target_cards.append(valid_target_card)
+                
+                # If there is no role, then it can't be equipped, therefore, it's a valid card.
+                else:
+                    valid_target_card = {"target_user": target_user, "target_card": c}
+                    valid_target_cards.append(valid_target_card)
+            
+            # This shouldn't happen but just incase, there's a catch for it.
+            if valid_target_cards == []:
+                return await ctx.respond("I wasn't able to find any valid cards to steal! Maybe try again later. You weren't charged.", ephemeral=True)
+
+            # Actually picks the card to steal.
+            stolen_card_info = random.choice(valid_target_cards)
+            target_card = stolen_card_info["target_card"]
+            target_user = stolen_card_info["target_user"]
+
+            # Subtracts the purchase price from the user and adjusts their stats.
+            user["money"] = user["money"] - int(view.value["price"])
+            user["shop_stats"]["steals_purchased"] = user["shop_stats"]["steals_purchased"] + 1
+            user["shop_stats"]["cards_stolen"].append(target_card["num"])
+
+            # Removes the card from the random_target.
+            target_user["inventory"].remove(target_card)
+            saved_target = self.save_user(target_user)
+            if saved_target != True:
+                print("Something went wrong. Was unable to steal a card from:")
+                print(target_user)
+                print(target_card)
+            else:
+                await self.check_for_achievements(target_user)
+
+            # Adds the card to the users inventory.
+            user["inventory"].append(target_card)
+            saved_user = self.save_user(user)
+            if saved_user != True:
+                print("Something went wrong. Was unable to save stolen card to:")
+                print(user)
+                print(target_card)
+            else:
+                await self.check_for_achievements(user, ctx)
+        
+            # Generates an embed to let the server know that someone stole a card!
+            embed = self.generate_card(target_card)
+            return await ctx.respond(f"<@{ctx.author.id}>, just sniped a card from <@{target_user['id']}>:", embed=embed)
 
 def setup(client):
     client.add_cog(BBTCG(client))
