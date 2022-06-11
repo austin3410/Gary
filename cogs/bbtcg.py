@@ -852,14 +852,14 @@ class BBTCG(commands.Cog):
             last_played = user["slots_stats"]["time_since_last_played"]
             
         if last_played == 0 or last_played < datetime.now() - timedelta(days=1):
-            user["slots_stats"]["time_since_last_played"] = datetime.now()
-            await message.respond(f":tada: You just got $200 for your daily bonus! :tada:", ephemeral=True)
-            user["money"] = user["money"] + 200
+            await message.respond(f":tada: You just got $300 in rest money! :tada:", ephemeral=True)
+            user["money"] = user["money"] + 300
 
-            user_saved = self.save_user(user)
-            if user_saved != True:
-                return print("Something went wrong. Unable to save user in slots.")
-            user = self.load_user(message.author.id)
+        user["slots_stats"]["time_since_last_played"] = datetime.now()
+        user_saved = self.save_user(user)
+        if user_saved != True:
+            return print("Something went wrong. Unable to save user in slots.")
+        user = self.load_user(message.author.id)
         
         try:
             await message.delete()
