@@ -20,7 +20,7 @@ bot.token = env.token
 bot.gif_token = env.gif_token
 
 # Then we start to load in all of the selected cogs in the cogs folder.
-cogs_to_load = ["ping", "burn", "yesno", "quote", "mock", "music", "bbtcg", "meow", "subscribe", "help", "bbtcg_games"]
+cogs_to_load = ["ping", "burn", "yesno", "quote", "mock", "music", "bbtcg", "meow", "subscribe", "bbtcg_games", "help"]
 
 if __name__ == '__main__':
     for cog in cogs_to_load:
@@ -43,21 +43,22 @@ async def on_ready():
     # This constructs all the background info for the help command.
     command_helps = {}
     for command in bot.commands:
-        if command.default_permission == False:
+        #print(command.default_member_permissions)
+        if command.default_member_permissions != None:
             continue
 
-        if "SlashCommandGroup" in str(command):
+        if "SlashCommandGroup" in str(type(command)):
             #command_helps = {**command_helps, command.name: {"description": command.description, "type": "SlashCommandGroup"}}
             for c in command.subcommands:
                 command_helps = {**command_helps, c.name: {"description": c.description, "parent": command.name, "type": "SlashCommand"}}
 
-        elif "SlashCommand" in str(command):
+        elif "SlashCommand" in str(type(command)):
             command_helps = {**command_helps, command.name: {"description": command.description, "type": "SlashCommand"}}
 
-        elif "UserCommand" in str(command):
+        elif "UserCommand" in str(type(command)):
             command_helps = {**command_helps, command.name: {"description": command.__dict__["__original_kwargs__"]["help"], "type": "UserCommand"}}
 
-        elif "MessageCommand" in str(command):
+        elif "MessageCommand" in str(type(command)):
             command_helps = {**command_helps, command.name: {"description": command.__dict__["__original_kwargs__"]["help"], "type": "MessageCommand"}}
     
     bot.command_helps = command_helps

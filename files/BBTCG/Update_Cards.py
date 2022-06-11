@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 from requests.api import request
 import pickle
 import re
+import os
+import shutil
 
 characters = []
 c_num = 1
@@ -49,5 +51,15 @@ for category in character_categories:
     else:
         print(r.text)
 
+if os.path.exists("files//BBTCG//card_data.pickle"):
+    shutil.copyfile("files//BBTCG//card_data.pickle", "files//BBTCG//bkup_card_data.pickle")
+
 with open("files//BBTCG//card_data.pickle", "wb") as file:
     pickle.dump(characters, file)
+
+with open("files//BBTCG//bkup_card_data.pickle", "rb") as file:
+    bkup_characters = pickle.load(file)
+
+for c in characters:
+    if c["name"] not in [bc["name"] for bc in bkup_characters]:
+        print(c)

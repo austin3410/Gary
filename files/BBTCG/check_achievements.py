@@ -169,6 +169,42 @@ class CheckAchievements():
             return payload
         else:
             return False
+    
+    def GAH(self, user):
+        uid = str(inspect.currentframe().f_code.co_name)
+        cards = user["inventory"]
+        card_names = [card["name"] for card in cards]
+
+        if set(["Chip (food)", "Penny", "Used Napkin"]).issubset(card_names):
+            payload = {"uid": uid, "name": "Gangs All Here!",
+            "description": "Have Chip, Penny, and Used Napkin in your inventory at the same time.", "reward": 200, "color": self.rare["color"], "rarity": self.rare["rarity"]}
+            return payload
+        else:
+            return False
+    
+    def OBG(self, user):
+       uid = str(inspect.currentframe().f_code.co_name)
+       cards = user["inventory"]
+       card_names = [card["name"] for card in cards]
+
+       if set(["Old Man Jenkins", "Grand Maul Granny", "Grandma SquarePants","Granny"]).issubset(card_names):
+           payload = {"uid": uid, "name": "Old But Gold",
+           "description": "Have Grand Maul Grannys, Grandma SquarePants, Old Man Jenkins, and Granny in your inventory at the same time.", "reward": 300, "color": self.epic["color"], "rarity": self.epic["rarity"]}
+           return payload
+       else:
+           return False
+    
+    def IGK(self, user):
+        uid = str(inspect.currentframe().f_code.co_name)
+        cards = user["inventory"]
+        card_names = [card["name"] for card in cards]
+
+        if set(["Eugene H. Krabs", "Pearl Krabs", "Betsy Krabs"]).issubset(card_names):
+            payload = {"uid": uid, "name": "I Got Krabs",
+            "description": "Have Eugene H. Krabs, Pearl Krabs, and Betsy Krabs in your inventory at the same time.", "reward": 500, "color": self.legendary["color"], "rarity": self.legendary["rarity"]}
+            return payload
+        else:
+            return False
 
     ################################################################################################
     # Single Card Achievements                                                                     #

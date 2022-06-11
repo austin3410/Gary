@@ -39,7 +39,7 @@ class Help(commands.Cog):
                 
                 # This checks to see if the message has reached Discords message char limit.
                 # If so, it sends what it has and form a new message for the remaining help texts.
-                if len(help_str) >= 1950:
+                if len(help_str) >= 1900:
                     help_str += "```"
                     await ctx.respond(help_str, ephemeral=True)
                     help_str = "```"
