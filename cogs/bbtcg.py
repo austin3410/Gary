@@ -861,7 +861,10 @@ class BBTCG(commands.Cog):
                 return print("Something went wrong. Unable to save user in slots.")
             user = self.load_user(message.author.id)
         
-        await message.delete()
+        try:
+            await message.delete()
+        except:
+            pass
 
         buy_in = 5 * spins
         thread = await message.channel.create_thread(name=f"{message.author.name}'s Slots Match", type=discord.ChannelType.public_thread)
