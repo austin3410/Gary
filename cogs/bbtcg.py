@@ -840,7 +840,7 @@ class BBTCG(commands.Cog):
     # SLOTS command - Adds a user to a card role.
     @slash_command(name="slots", description="Plays slots for BBTCG cash! Use in #slots.")
     @check(before_invoke_channel_check)
-    @cooldown(1, 300, commands.BucketType.user)
+    @cooldown(1, 600, commands.BucketType.user)
     async def bbtcg_slots(self, message, spins: Option(int, description="How many spins would you like? Defaults to 10.", min_value=1, max_value=20, default=10, required=False)):
 
         user = self.load_user(message.author.id)
