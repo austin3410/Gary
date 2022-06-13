@@ -238,7 +238,7 @@ class BBTCG_Games(commands.Cog):
 
                 # IF there is a winner or a draw it ends the game and stops listening to button clicks.
                 if winner == "DRAW":
-                    await self.game_thread.send(f"It's a draw! Everyone keeps their bet.")
+                    await self.game_thread.send(f"It's a cat's game! Everyone keeps their bet.")
                     self.winner = winner
                     self.stop()
                 elif winner != None:
