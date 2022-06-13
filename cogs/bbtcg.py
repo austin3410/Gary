@@ -52,7 +52,7 @@ class BBTCG(commands.Cog):
                     c.pop("seller_id")
                     c.pop("selling_price")
                     cards.append(c)
-            # Randomly picks between 3 and 6 new cards to add to the market.
+            # Randomly picks between 4 and 8 new cards to add to the market.
             drop = []
             amount_of_cards = random.randrange(4, 8)
             for i in range(0, amount_of_cards):
@@ -68,12 +68,14 @@ class BBTCG(commands.Cog):
             for c in drop:
                 c["seller"] = "Bikini Bottom Dweller"
                 c["seller_id"] = 0
-                firesale = random.randint(0, 144)
-                if firesale == 143:
+                firesale = random.randint(0, 145)
+                if firesale == 144:
                     print(f"Fire sale on {c['name']} !!!")
                     c["selling_price"] = round(int(c["value"]) * .15)
-                else:
+                elif firesale > 100:
                     c["selling_price"] = round(int(c["value"]) * random.uniform(.9, 1.30))
+                else:
+                    c["selling_price"] = round(int(c["value"]) * random.uniform(1.4, 1.75))
                 market.append(c)
             saved_market = self.save_market(market)
             saved_cards = self.save_cards(cards)
