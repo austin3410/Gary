@@ -128,7 +128,7 @@ class BBTCG(commands.Cog):
                 os.makedirs(self.BBTCGdir + "users//")
             with open(self.BBTCGdir + f"users//{uid}.pickle", "wb") as file:
                 user = {"id": uid, "inventory": [], "money": 50, "earned_achievements": [], "shop_stats": {"cards_purchased": 0, "steals_purchased": 0, "cards_stolen": []},
-                        "market_stats": {"cards_purchased": 0, "cards_sold": 0, "cards_scrapped": 0}, "slots_stats": {"slots_played": 0, "time_since_played_last": 0}}
+                        "market_stats": {"cards_purchased": 0, "cards_sold": 0, "cards_scrapped": 0}, "slots_stats": {"slots_played": 0, "time_since_last_played": 0}}
                 pickle.dump(user, file)
                 return user
     
