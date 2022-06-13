@@ -852,6 +852,7 @@ class BBTCG(commands.Cog):
             last_played = user["slots_stats"]["time_since_last_played"]
             
         if last_played == 0 or last_played < datetime.now() - timedelta(days=1):
+
             await message.respond(f":tada: You just got $300 in rest money! :tada:", ephemeral=True)
             user["money"] = user["money"] + 300
 
@@ -865,6 +866,19 @@ class BBTCG(commands.Cog):
             await message.delete()
         except:
             pass
+
+        buy_in = 5 * spins
+        thread = await message.channel.create_thread(name=f"{message.author.name}'s Slots Match", type=discord.ChannelType.public_thread)
+        # Loads the user and makes sure they have enough money to play.
+        if user["money"] < buy_in:
+            self.bot.get_application_command("slots").reset_cooldown(message)
+            return await thread.send(f"You don't have enough money to play slots {spins} times! Don't worry, your cooldown wasn't triggered.")
+        else:
+            user["money"] -= buy_in
+        
+        user_saved = self.save_user(user)
+        if user_saved != True:
+            return print("Something went wrong. Unable to save user in slots.")
 
         buy_in = 5 * spins
         thread = await message.channel.create_thread(name=f"{message.author.name}'s Slots Match", type=discord.ChannelType.public_thread)
@@ -1184,7 +1198,6 @@ class BBTCG(commands.Cog):
                     self.clear_items()
                     await interaction.response.edit_message(content="Thanks for the purchase!", view=self)
                     self.stop()
-                
                 
 
         # Establishes the Store class as a view.
