@@ -51,6 +51,7 @@ class BBTCG(commands.Cog):
                     c.pop("seller")
                     c.pop("seller_id")
                     c.pop("selling_price")
+                    c.pop("selling_start_time")
                     cards.append(c)
             # Randomly picks between 4 and 8 new cards to add to the market.
             drop = []
@@ -68,6 +69,7 @@ class BBTCG(commands.Cog):
             for c in drop:
                 c["seller"] = "Bikini Bottom Dweller"
                 c["seller_id"] = 0
+                c["selling_start_time"] = datetime.now()
                 firesale = random.randint(0, 145)
                 if firesale == 144:
                     print(f"Fire sale on {c['name']} !!!")
@@ -203,28 +205,28 @@ class BBTCG(commands.Cog):
     
     # This function triggers when the game is over or almost over and there are no more cards left to draw.
     async def end_game(self):
-        # Loads the cards and the market to check their current status.
-        print("!!BBTCG END GAME!!")
+        # Loads the cards to check its current status.
         cards = self.load_cards()
-        market = self.load_market()
-
-        # Finds the BBTCG channel to post messages to.
-        for channel in self.client.get_all_channels():
-            if channel.name == "bbtcg":
-                bbtcg_channel = channel
-                bbtcg_guild = bbtcg_channel.guild
 
         # Checks if both the market and available card pools are empty.
         if len(cards) <= 0:
+
+            # Finds the BBTCG channel to post messages to.
+            for channel in self.client.get_all_channels():
+                if channel.name == "bbtcg":
+                    bbtcg_channel = channel
+                    bbtcg_guild = bbtcg_channel.guild
+
+            # Loads the market to check its current status.
+            market = self.load_market()
             if len(market) <= 0:
                 
                 # If both are empty the game is over and cleanup/after game stats occur.
-                await bbtcg_channel.send("All cards have been drawn or bought! The game is over!")
-                
                 # Creates a winner placeholder.
                 winner = None
                 second_place = None
                 third_place = None
+                users = []
 
                 # Loads the all of the user files and compares their card values.
                 user_files = os.listdir("files//BBTCG//users")
@@ -242,13 +244,20 @@ class BBTCG(commands.Cog):
                         user["card_value"] = user_card_value
                         #user["id"] = file.replace(".pickle", "")
 
-                        # Checks if the user's card value beats the current "winner" card value.
-                        if winner == None:
-                            winner = user
-                        elif user["card_value"] > winner["card_value"]:
-                            third_place = second_place
-                            second_place = winner
-                            winner = user
+                        users.append(user)
+                
+                # This sorts the users
+                sorted_users = sorted(users,  key=lambda d: d["card_value"])
+                winner = sorted_users[-1]
+                try:
+                    second_place = sorted_users[-2]
+                except:
+                    pass
+                try:
+                    third_place = sorted_users[-3]
+                except:
+                    pass
+
                 
                 # This starts the cleanup and game reset.
                 # First deletes all of the created roles.
@@ -260,7 +269,7 @@ class BBTCG(commands.Cog):
                         print("deleted role " + role.name)
                 
                 # Send a message declaring the winner of the game.
-                msg = f"@everyone The top three players are:\n"
+                msg = f"All cards have been drawn or bought! The game is over!\nThe top three players are:\n"
                 if winner != None:
                     msg = msg + f"<@{winner['id']}>, they had **${winner['card_value']}** worth of cards!\n"
                 if second_place != None:
@@ -316,6 +325,8 @@ class BBTCG(commands.Cog):
         await ctx.respond(f"<@{ctx.user.id}> congrats on the draw!", embed=embed)
 
         await self.check_for_achievements(user, ctx)
+
+        return await self.end_game()
     
     async def check_for_achievements(self, user, ctx=None):
         cc = CheckAchievements()
@@ -568,7 +579,7 @@ class BBTCG(commands.Cog):
         return await message.respond(f"<@{message.author.id}>, you don't own that card!")
 
 
-    market = SlashCommandGroup("market", "All commands related to the BBTCG market.", [389818215871676418])
+    market = SlashCommandGroup("market", "All commands related to the BBTCG market.")
     
     @market.command(description="Shows the BBTCG market.")
     async def show(self, ctx):
@@ -583,7 +594,8 @@ class BBTCG(commands.Cog):
         else:
             msg = "============\n**Current Market Offerings**\nMarket Values: Common - $25 | Rare - $65 | Epic - $105 | Legendary - $215\n\n"
             for c in market:
-                msg = msg + f"`${c['selling_price']} from {c['seller']}: {c['name']} - {c['rarity']} - Card no. {c['num']}`\n"
+                if c["selling_start_time"] < datetime.now():
+                    msg = msg + f"`${c['selling_price']} from {c['seller']}: {c['name']} - {c['rarity']} - Card no. {c['num']}`\n"
             
             msg = msg + f"\nIf you would like to purchase any of these, use the command:\n/market buy <Card no.>"
             return await ctx.respond(msg)
@@ -611,6 +623,7 @@ class BBTCG(commands.Cog):
         card_to_sell["seller"] = ctx.author.name
         card_to_sell["seller_id"] = ctx.author.id
         card_to_sell["selling_price"] = str(price).replace("$", "")
+        card_to_sell["selling_start_time"] = datetime.now() + timedelta(minutes=5)
         # Loads the market and adds the new listing to the market.
         market = self.load_market()
         market.append(card_to_sell)
@@ -623,7 +636,7 @@ class BBTCG(commands.Cog):
         if saved_market != True:
             return print("Something went wrong in MARKET POST market not saved!")
         
-        return await ctx.respond(f"I created your market post for Card no. {card_to_sell['num']}!")
+        return await ctx.respond(f"I will create your market post for Card no. **{card_to_sell['num']}** in **5 minutes**!")
     
     @market.command(description="Buys a card on the BBTCG market.")
     async def buy(self, ctx, cardno: Option(int, description="Card no you want to buy.")):
@@ -664,6 +677,7 @@ class BBTCG(commands.Cog):
         card_to_buy.pop("seller")
         card_to_buy.pop("seller_id")
         card_to_buy.pop("selling_price")
+        card_to_buy.pop("selling_start_time")
         
         # Adds the card to the buyers inventory and saves the buyer.
         buyer["inventory"].append(card_to_buy)
@@ -682,7 +696,9 @@ class BBTCG(commands.Cog):
         if saved_buyer != True or saved_market != True or saved_seller != True:
             return print("Something went wrong with BUY!")
         
-        return await ctx.respond(f"Successfully purchased Card no. {card_to_buy['num']} from the market!")
+        await ctx.respond(f"Successfully purchased Card no. {card_to_buy['num']} from the market!")
+
+        return await self.end_game()
     
     @market.command(description="Cancels your cards listing on the BBTCG market.")
     async def cancel(self, ctx, cardno: Option(int, description="Card no you want to cancel.")):
