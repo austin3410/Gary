@@ -531,7 +531,7 @@ class BBTCG(commands.Cog):
             card = "cards"
         
         msg_footer = f"\nYou have **{card_count}** {card}!\nValue of cards: **${cards_value}**\nYour current cash: **${user['money']}**\nTotal account value: **${cards_value + user['money']}**\n\n" \
-                        "To inspect a card use: |ins <Card no.>"
+                        "To inspect a card use: /inspect <Card no.>"
 
         # Checks to see if the message can be sent within Discords 2000 character message limit.
         # If not then it intelligently splits the list of cards into sizable chunks.
