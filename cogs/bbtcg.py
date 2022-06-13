@@ -3,8 +3,8 @@ import inspect
 from discord.commands import Option, option
 from discord.ext import commands
 from discord.commands import slash_command, user_command, permissions, SlashCommandGroup
-from discord.ext.commands import cooldowns  # Importing the decorator that makes slash commands.
-from discord.ext.commands.core import command, cooldown, check
+from discord.ext.commands import cooldowns, Cooldown  # Importing the decorator that makes slash commands.
+from discord.ext.commands.core import command, cooldown, check, dynamic_cooldown
 from discord.ui import Button, View
 from datetime import datetime, timedelta
 from discord import SelectOption, default_permissions
@@ -394,7 +394,21 @@ class BBTCG(commands.Cog):
                 return ctx.channel.name == "games"
             elif ctx.command.name == "store" or ctx.command.name == "draw":
                 return ctx.channel.name == "bbtcg"
+    
+    # This lets us dynamically create an appropriate cooldown for slots.
+    def slots_cooldown(message):
+        # If an amount of spins was specified.
+        try:
+            spins = message.selected_options[0]["value"]
+        
+        # If the default value was used.
+        except:
+            spins = message.unselected_options[0].default
+        
+        # Calcuates cooldown time in seconds.
+        cd_time = spins * 60
 
+        return Cooldown(1, cd_time)
 
 
 ################################################################################################
@@ -415,7 +429,7 @@ class BBTCG(commands.Cog):
         user = self.load_user(member.id)
         temp_file_path = f"files//BBTCG//{member.name}.json"
         with open(temp_file_path, "w") as file:
-            user_json = json.dumps(user)
+            user_json = json.dumps(user, indent=4, sort_keys=True, default=str)
             file.write(user_json)
         await ctx.respond(file=discord.File(temp_file_path), ephemeral=True)
         return os.remove(temp_file_path)
@@ -840,8 +854,8 @@ class BBTCG(commands.Cog):
     # SLOTS command - Adds a user to a card role.
     @slash_command(name="slots", description="Plays slots for BBTCG cash! Use in #slots.")
     @check(before_invoke_channel_check)
-    @cooldown(1, 600, commands.BucketType.user)
-    async def bbtcg_slots(self, message, spins: Option(int, description="How many spins would you like? Defaults to 10.", min_value=1, max_value=20, default=10, required=False)):
+    @dynamic_cooldown(cooldown=slots_cooldown, type=commands.BucketType.user)
+    async def bbtcg_slots(self, message, spins: Option(int, description="How many spins would you like? Defaults to 20.", min_value=1, max_value=20, default=20, required=False)):
 
         user = self.load_user(message.author.id)
 
@@ -852,7 +866,6 @@ class BBTCG(commands.Cog):
             last_played = user["slots_stats"]["time_since_last_played"]
             
         if last_played == 0 or last_played < datetime.now() - timedelta(days=1):
-
             await message.respond(f":tada: You just got $300 in rest money! :tada:", ephemeral=True)
             user["money"] = user["money"] + 300
 
@@ -866,19 +879,6 @@ class BBTCG(commands.Cog):
             await message.delete()
         except:
             pass
-
-        buy_in = 5 * spins
-        thread = await message.channel.create_thread(name=f"{message.author.name}'s Slots Match", type=discord.ChannelType.public_thread)
-        # Loads the user and makes sure they have enough money to play.
-        if user["money"] < buy_in:
-            self.bot.get_application_command("slots").reset_cooldown(message)
-            return await thread.send(f"You don't have enough money to play slots {spins} times! Don't worry, your cooldown wasn't triggered.")
-        else:
-            user["money"] -= buy_in
-        
-        user_saved = self.save_user(user)
-        if user_saved != True:
-            return print("Something went wrong. Unable to save user in slots.")
 
         buy_in = 5 * spins
         thread = await message.channel.create_thread(name=f"{message.author.name}'s Slots Match", type=discord.ChannelType.public_thread)
@@ -934,25 +934,25 @@ class BBTCG(commands.Cog):
                         roll_list.append(roll)
             if roll1 == roll2 == roll3:
                 if roll1 in [":sponge:", ":snail:", ":octopus:", ":crab:"]:
-                    # 40 times payout!
-                    earnings += 200
-                    await thread.send(f"{final_msg}\nYou just nailed a 40x payout of **$200** by getting a three of a kind with SpongeBob characters! :moneybag:")
+                    # 50 times payout!
+                    earnings += 250
+                    await thread.send(f"{final_msg}\nYou just nailed a 50x payout of **$250** by getting a three of a kind with SpongeBob characters! :moneybag:")
                 else:
-                    # 20 times payout!
-                    earnings += 100
-                    await thread.send(f"{final_msg}\nYou just nabbed a 20x payout of **$100** by getting a three of a kind! :dollar:")
+                    # 25 times payout!
+                    earnings += 125
+                    await thread.send(f"{final_msg}\nYou just nabbed a 25x payout of **$125** by getting a three of a kind! :dollar:")
             elif len(roll_list) == 3:
-                # 8 times payout!
-                earnings += 40
-                await thread.send(f"{final_msg}\nYou just scored an 8x payout of **$40** by getting a trio of SpongeBob characters! :coin:")
+                # 10 times payout!
+                earnings += 50
+                await thread.send(f"{final_msg}\nYou just scored an 10x payout of **$50** by getting a trio of SpongeBob characters! :coin:")
             elif roll1 == roll2 or roll2 == roll3:
-                # 3 times payout!
-                earnings += 15
-                await thread.send(f"{final_msg}\nYou just grabbed a 3x payout of **$15** by getting two in a row!")
+                # 4 times payout!
+                earnings += 20
+                await thread.send(f"{final_msg}\nYou just grabbed a 4x payout of **$20** by getting two in a row!")
             elif ":sponge:" in [roll1, roll2, roll3]:
-                # 0.1 times payout.
-                earnings += 1
-                await thread.send(f"{final_msg}\nYou got a sponge and **$1** of your buy-in back.")
+                # 0.4 times payout.
+                earnings += 2
+                await thread.send(f"{final_msg}\nYou got a sponge and **$2** of your buy-in back.")
             else:
                 await thread.send(f"{final_msg}\nYou unfortunately didn't get anything, you should try again.")
             
@@ -971,6 +971,8 @@ class BBTCG(commands.Cog):
         else:
             await thread.send(f"You played slots {spun} times and lost ${str(net)[1:]}")
         
+        user["slots_stats"]["slots_played"] += spun
+
         user_saved = self.save_user(user)
         if user_saved != True:
             return print("Something went wrong. Unable to save user in slots.")
