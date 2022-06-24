@@ -14,7 +14,8 @@ except:
 
 # Then we establish that we are using the discord.Bot lib.
 logging.basicConfig(level=logging.WARNING, filename="gary.log", filemode="a", format='%(asctime)s:%(levelname)8s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-bot = discord.Bot()
+intents = discord.Intents.all()
+bot = discord.Bot(intents=intents)
 bot.id = env.id
 bot.token = env.token
 bot.gif_token = env.gif_token
@@ -122,6 +123,6 @@ async def on_application_command_error(ctx, event):
     else:
         print(type(event))
         print(f"\nSomething caused this error:\n{event}")
-        traceback.print_exc()
+        traceback.print_exc()        
 
 bot.run(bot.token)

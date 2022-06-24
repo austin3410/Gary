@@ -7,6 +7,7 @@ from discord.ui import View, button, Item, Button
 import asyncio
 import pickle
 import os
+#import random
 
 class BBTCG_Games(commands.Cog):
     # Inits the bot instance so we can do things like send messages and get other Discord information.
@@ -45,7 +46,7 @@ class BBTCG_Games(commands.Cog):
     def before_invoke_channel_check(ctx):
         if str(ctx.channel.type) == "private":
             return False
-        if ctx.command.name == "tictactoe" or ctx.command.name == "connect4":
+        if ctx.command.name == "tictactoe" or ctx.command.name == "cointoss":
             return ctx.channel.name == "games"
     
     # This handles inviting someone to play a game.
@@ -114,18 +115,123 @@ class BBTCG_Games(commands.Cog):
             # This triggers if the user accepts the game.
             return view.value
 
+    # This handles pre-game checks to make sure the game would be valid.
+    async def pregame_check(self, ctx, against: discord.User, bet: int):
+        host = ctx.author
+        guest = against
+
+        # Checks to see if the host is trying to invite themselves to a game.
+        if host == guest:
+            msg = {"result": False, "reason": "You can't play yourself."}
+            return msg
+        
+        # Loads the hosts user file to check if they have sufficient funds to place their bet.
+        host_user = self.load_user(host.id)
+        if host_user["money"] < bet:
+            msg = {"result": False, "reason": "You can't bet more money than you currently have."}
+            return msg
+        
+        # If everything is good, the game can continue.
+        return {"result": True}
+
+    # COIN TOSS - Slash command
+    """@slash_command(name="cointoss", description="Play a Coin Toss game for greater and greater rewards!", guild_ids=[389818215871676418])
+    @check(before_invoke_channel_check)
+    async def cointoss(self, ctx):
+        
+        player = ctx.author
+        player_user = self.load_user(ctx.author.id)
+
+        if player_user["money"] < 10:
+            return await ctx.respond("You don't have enough money to play Coin Toss. The buy-in is $10.")
+        else:
+            await ctx.delete()
+
+        # This creates the thread channel the game takes place in.
+        game_thread = await ctx.channel.create_thread(name=f"{player.name}: COIN TOSS",  type=discord.ChannelType.public_thread, auto_archive_duration=60)
+        
+        class ct(discord.ui.View):
+            def __init__(self, *items: Item, timeout: float = 120, player: discord.User, game_thread):
+                super().__init__(*items, timeout=timeout)
+                self.player = player
+                self.game_thread = game_thread
+                self.round = 1
+                self.multiplier = 3
+                self.buyin = 10
+                self.value = None
+                self.inter = None
+
+            @button(label="Flip", style=ButtonStyle.danger, disabled=False, custom_id="flip", row=0)
+            async def flip(self, button: discord.ui.Button, interaction: discord.Interaction):
+                await self.flip_callback(button, interaction)
+            
+            @button(label="Stay", style=ButtonStyle.success, disabled=False, custom_id="stay", row=0)
+            async def stay(self, button: discord.ui.Button, interaction: discord.Interaction):
+                pass
+            
+            async def flip_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+                flip = random.choice([":arrow_up:", ":arrow_down:"])
+                if flip == ":arrow_up:":
+                    self.buyin  *= self.multiplier
+                    self.multiplier += 1
+                    self.round += 1
+                    await interaction.response.edit_message(content=f"Round {self.round}\nCurrent pot: **${self.buyin}**", view=self)
+                else:
+                    self.clear_items()
+                    await interaction.response.edit_message(content=f"{flip} Sorry, you lose! You lasted {self.round} rounds!", view=self)
+                    self.buyin = 0
+                    self.value = "LOST"
+                    self.inter = interaction
+                    self.stop()
+            async def stay_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+                self.value = "STAY"
+                self.stop()
+        
+        class ctplayagain(discord.ui.View):
+            def __init__(self, *items: Item, timeout: float = 20, game_thread, inter: discord.Interaction):
+                super().__init__(*items, timeout=timeout)
+                self.game_thread = game_thread
+                self.inter = inter
+                self.value = None
+            
+            async def on_timeout(self):
+                self.value = "PASS"
+            
+            @button(label="Play Again?", style=ButtonStyle.blurple, custom_id="play_again")
+            async def play_again(self, button:discord.ui.Button, interaction: discord.Interaction):
+                self.value = "PLAY AGAIN"
+                self.clear_items()
+                await self.inter.delete_original_message()
+                await interaction.response.edit_message(content="New game starting...", view=self)
+                self.stop()
+        while True:
+            await game_thread.purge(limit=1)
+            cointoss = ct(player=player, game_thread=game_thread)
+            await game_thread.send(content="Round 1", view=cointoss)
+            timeout = await cointoss.wait()
+            
+            if cointoss.value == "LOST":
+                ctpa = ctplayagain(game_thread=game_thread, inter=cointoss.inter)
+                await game_thread.send(view=ctpa)
+                timeout = await ctpa.wait()
+                print(timeout)
+                if timeout == True:
+                    break
+                elif ctpa.value == "PLAY AGAIN":
+                    pass"""
+
     # TIC TAC TOE - Slash command
     @slash_command(name="tictactoe", description="Play a game of TicTacToe against other players for BBTCG Cash!")
     @check(before_invoke_channel_check)
     async def tictactoe(self, ctx, against: Option(discord.User, "Who do you want to play against?"), bet: Option(int, "How much BBTCG cash are you betting?")):
 
+        pregame_check = await self.pregame_check(ctx, against, bet)
+        if pregame_check["result"] == False:
+            return await ctx.respond(f"{pregame_check['reason']}", ephemeral=True)
+        
         # Sets player1 as the Guest (who goes first) and player2 as the host (who started the game).
         player2 = ctx.author
         player1 = against
-
-        # Makes sure the host isn't trying to play themself.
-        if player1 == player2:
-            return await ctx.respond(f"You can't play yourself.")
 
         # Placeholder response while the guest accepts or rejects the invite (initial interactions require a response within 3 seconds or they'll timeout)
         await ctx.respond(f"Inviting {player1.name}...", ephemeral=True)
