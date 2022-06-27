@@ -6,11 +6,27 @@ import config
 import logging
 
 # First we load the environment classes which hold the token and id of the different Gary bots.
+# This also determines if we're running as a Streamlit app or locally.
 try:
-    if sys.argv[1] == "DEV":
-       env = config.DEV()
+    # Tries to start locally.
+    try:
+        if sys.argv[1] == "DEV":
+           env = config.DEV()
+    except:
+        env = config.PRODUCTION()
 except:
-    env = config.PRODUCTION()
+    # This only runs if the app is being started in Steamlit.
+    try:
+        import streamlit as st
+        class StreamlitEnv:
+            def __init__(self, st):
+                self.id = st.secrets["ID"]
+                self.token = st.secrets["TOKEN"]
+                self.gif_token = st.secrets["GIF_TOKEN"]
+        
+        env = StreamlitEnv(st)
+    except:
+        raise "Couldn't determine Environemnt."
 
 # Then we establish that we are using the discord.Bot lib.
 logging.basicConfig(level=logging.WARNING, filename="gary.log", filemode="a", format='%(asctime)s:%(levelname)8s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')

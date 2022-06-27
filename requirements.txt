@@ -2,3 +2,4 @@ py-cord==2.0.0-rc.1
 requests
 youtube-dl
 config
+streamlit
