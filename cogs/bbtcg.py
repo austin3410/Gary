@@ -1,13 +1,13 @@
 import asyncio
 import inspect
-from discord.commands import Option, option
+from discord.commands import Option
 from discord.ext import commands
-from discord.commands import slash_command, user_command, permissions, SlashCommandGroup
-from discord.ext.commands import cooldowns, Cooldown  # Importing the decorator that makes slash commands.
-from discord.ext.commands.core import command, cooldown, check, dynamic_cooldown
-from discord.ui import Button, View
+from discord.commands import slash_command, user_command, SlashCommandGroup
+from discord.ext.commands import Cooldown  # Importing the decorator that makes slash commands.
+from discord.ext.commands.core import cooldown, check, dynamic_cooldown
+#from discord.ui import Button, View
 from datetime import datetime, timedelta
-from discord import SelectOption, default_permissions
+from discord import default_permissions
 import discord
 import pickle
 import random
@@ -129,13 +129,29 @@ class BBTCG(commands.Cog):
             if not os.path.exists(self.BBTCGdir + "users//"):
                 os.makedirs(self.BBTCGdir + "users//")
             with open(self.BBTCGdir + f"users//{uid}.pickle", "wb") as file:
-                user = {"id": uid, "inventory": [], "money": 50, "earned_achievements": [], "shop_stats": {"cards_purchased": 0, "steals_purchased": 0, "cards_stolen": []},
-                        "market_stats": {"cards_purchased": 0, "cards_sold": 0, "cards_scrapped": 0}, "slots_stats": {"slots_played": 0, "time_since_last_played": 0}}
+                user = {
+                    "id": uid, 
+                    "inventory": [], 
+                    "money": 50, 
+                    "earned_achievements": [], 
+                    "shop_stats": {
+                        "cards_purchased": 0, 
+                        "steals_purchased": 0, 
+                        "cards_stolen": []
+                        },
+                    "market_stats": {
+                        "cards_purchased": 0, 
+                        "cards_sold": 0, "cards_scrapped": 0
+                        }, 
+                    "slots_stats": {
+                        "slots_played": 0, 
+                        "time_since_last_played": 0
+                        }
+                    }
                 pickle.dump(user, file)
                 return user
     
     # This function saves a users file.
-    # If it can't, it re-creates the users file.
     def save_user(self, user):
         try:
             with open(self.BBTCGdir + f"users//{user['id']}.pickle", "wb") as file:
@@ -145,7 +161,7 @@ class BBTCG(commands.Cog):
             print(e)
             return False
     
-    # This function generates the Discrod embed object of a given card.
+    # This function generates the Discord embed object of a given card.
     def generate_card(self, card):
         embed = discord.Embed(title=card["name"], description=f"{card['category']} - {card['rarity']}", color=int(card["color"], 16))
         embed.set_image(url=card["img"])
@@ -153,7 +169,7 @@ class BBTCG(commands.Cog):
         embed.set_footer(text=f"Card no. {card['num']}")
         return embed
     
-    # This function opens and load the market file.
+    # This function opens and loads the market file.
     def load_market(self):
         try:
             with open(self.BBTCGdir + f"cards//market.pickle", "rb") as file:
@@ -242,8 +258,6 @@ class BBTCG(commands.Cog):
                         for card in user["inventory"]:
                             user_card_value = user_card_value + card["value"]
                         user["card_value"] = user_card_value
-                        #user["id"] = file.replace(".pickle", "")
-
                         users.append(user)
                 
                 # This sorts the users
