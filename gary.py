@@ -18,6 +18,7 @@ except:
     # This only runs if the app is being started in Steamlit.
     try:
         import streamlit as st
+        import asyncio
         class StreamlitEnv:
             def __init__(self, st):
                 self.id = st.secrets["ID"]
@@ -25,6 +26,8 @@ except:
                 self.gif_token = st.secrets["GIF_TOKEN"]
         
         env = StreamlitEnv(st)
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
     except:
         raise "Couldn't determine Environemnt."
 
