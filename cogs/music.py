@@ -198,7 +198,6 @@ class MusicPlayer:
             async def stop_callback(interaction):
                 await self._guild.voice_client.disconnect()
                 await interaction.response.send_message(f"{interaction.user.name} stopped the music.", delete_after=10)
-                await interaction.message.delete()
 
             async def volume_callback(interaction):
                 new_volume = str(interaction.data["values"][0]).split(" ")[1]

@@ -13,15 +13,16 @@ except:
     env = config.PRODUCTION()
 
 # Then we establish that we are using the discord.Bot lib.
-logging.basicConfig(level=logging.WARNING, filename="gary.log", filemode="a", format='%(asctime)s:%(levelname)8s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+logging.basicConfig(level=logging.WARNING, filename="files//gary.log", filemode="a", format='%(asctime)s:%(levelname)8s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 intents = discord.Intents.all()
 bot = discord.Bot(intents=intents)
 bot.id = env.id
 bot.token = env.token
 bot.gif_token = env.gif_token
+bot.serpapi_key = env.serpapi_key
 
 # Then we start to load in all of the selected cogs in the cogs folder.
-cogs_to_load = ["ping", "burn", "yesno", "quote", "mock", "music", "bbtcg", "meow", "subscribe", "bbtcg_games", "help"]
+cogs_to_load = ["ping", "burn", "yesno", "quote", "mock", "music", "bbtcg", "meow", "subscribe", "bbtcg_games", "gif", "help"]
 
 if __name__ == '__main__':
     for cog in cogs_to_load:
