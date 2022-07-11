@@ -74,11 +74,13 @@ class Gif(commands.Cog):
             
             @button(custom_id="random", style=ButtonStyle.blurple, emoji="🎱")
             async def random_result(self, button: discord.Button, interaction: discord.Interaction):
-                next_image = discord.Embed()
+                selected_image = discord.Embed()
                 random_index = randint(0, self.max_image_index)
-                next_image.set_image(url=self.images[random_index]["original"])
-                self.current_image_index = random_index
-                await interaction.response.edit_message(embed=next_image)
+                selected_image.set_image(url=self.images[random_index]["original"])
+                await interaction.channel.send(content=f"{interaction.user.name} randomly sent:", embed=selected_image)
+                self.clear_items()
+                await interaction.response.edit_message(content="I've sent your GIF.", embed=None, view=self)
+                self.stop()
             
             @button(label="Next", disabled=True)
             async def blank3(self, button, interaction):
@@ -98,9 +100,9 @@ class Gif(commands.Cog):
             "tbs": "itp:animated"
         }
 
+        await ctx.defer(ephemeral=True)
         search = GoogleSearch(params)
         results = search.get_dict()
-        await ctx.defer(ephemeral=True)
         
         gf = GifSelection(images_results=results["images_results"])
         first_result = discord.Embed()
