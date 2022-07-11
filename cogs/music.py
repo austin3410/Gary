@@ -190,23 +190,24 @@ class MusicPlayer:
             async def toggle_callback(interaction):
                 if self._guild.voice_client.is_playing():
                     self._guild.voice_client.pause()
-                    await interaction.response.send_message(f"{interaction.user.name} paused the music.", delete_after=10)
+                    await interaction.response.send_message(f"{interaction.user.name} paused the music.", delete_after=5)
                 else:
                     self._guild.voice_client.resume()
-                    await interaction.response.send_message(f"{interaction.user.name} resumed the music.", delete_after=10)
+                    await interaction.response.send_message(f"{interaction.user.name} resumed the music.", delete_after=5)
         
             async def stop_callback(interaction):
                 await self._guild.voice_client.disconnect()
-                await interaction.response.send_message(f"{interaction.user.name} stopped the music.", delete_after=10)
+                await interaction.response.send_message(f"{interaction.user.name} stopped the music.", delete_after=5)
+                self.destroy(self._guild)
 
             async def volume_callback(interaction):
                 new_volume = str(interaction.data["values"][0]).split(" ")[1]
                 self._guild.voice_client.source.volume = int(new_volume) / 100
-                await interaction.response.send_message(f"{interaction.user.name} adjusted the volume to {new_volume}.", delete_after=10)
+                await interaction.response.send_message(f"{interaction.user.name} adjusted the volume to {new_volume}.", delete_after=5)
 
             async def skip_callback(interaction):
                 self._guild.voice_client.stop()
-                await interaction.response.send_message(f"{interaction.user.name} skipped the current song.", delete_after=10)
+                await interaction.response.send_message(f"{interaction.user.name} skipped the current song.", delete_after=5)
 
             playpause_button = Button(label="Play/Pause", style=discord.ButtonStyle.blurple, emoji="⏯️")
             playpause_button.callback = toggle_callback
