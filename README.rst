@@ -1,6 +1,3 @@
-.. image:: https://img.shields.io/discord/881207955029110855?label=discord&style=for-the-badge&logo=discord&color=5865F2&logoColor=white
-   :target: https://pycord.dev/discord
-   :alt: Discord server invite
 .. image:: https://img.shields.io/github/v/release/Pycord-Development/pycord?include_prereleases&label=Pycord%20Version&logo=github&sort=semver&style=for-the-badge&logoColor=white
    :target: https://github.com/Pycord-Development/pycord/releases/tag/v2.0.0
    :alt: Pycord Version
@@ -25,6 +22,8 @@ All of these requirements should be added to ``config.py`` as seen in ``config-e
 - ``other_class.serpapi_key`` - A SERPAPI key that is used in the ``gif.py`` cog.
 - All pip packages listed in ``requirements.txt``.
 
+The DEV class within ``config-example.py`` is only there incase you plan on developing Gary further. If not, you can remove it.
+
 Features
 --------
 
@@ -35,6 +34,6 @@ Gary comes with an assortment of features:
 - **Interactive Music Player** - A music player with buttons and menus, instead of all slash commands.
 - **Subscription Channels** - Integrated system to let users subscribe to different channels to keep unwanted notifications and spoilers out of their feed.
 - **SpongeBob Mock Case** - A message command to convert any previous message to mock case (will also automatically pick someone to mock)
-- **Answer Yes/No Questions** - Any @Gary that's in the form of a Yes or No question will be answered! 
+- **Answer Yes/No Questions** - Any @Gary message that's in the form of a Yes or No question will be answered! 
 - **Much More!**
 
