@@ -144,7 +144,7 @@ class MusicPlayer:
 
             try:
                 # Wait for the next song. If we timeout cancel the player and disconnect...
-                async with timeout(30):  # 30 seconds...
+                async with timeout(300):  # 300 seconds (5 minutes)
                     source = await self.queue.get()
             except asyncio.TimeoutError as e:
                 if str(e) == None or str(e) == "":
