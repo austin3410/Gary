@@ -12,7 +12,7 @@ e.g You might like to implement a vote before skipping the song or only allow ad
 Music bots require lots of work, and tuning. Goodluck.
 If you find any bugs feel free to ping me on discord. @Eviee#0666
 """
-from turtle import color
+
 import discord
 from discord.ext import commands
 
@@ -187,51 +187,6 @@ class MusicPlayer:
                 embed.set_image(url=source.thumbnail)
 
             embed.set_author(name=source.title)
-
-            """async def toggle_callback(interaction):
-                if self._guild.voice_client.is_playing():
-                    self._guild.voice_client.pause()
-                    await interaction.response.send_message(f"{interaction.user.name} paused the music.", delete_after=5)
-                else:
-                    self._guild.voice_client.resume()
-                    await interaction.response.send_message(f"{interaction.user.name} resumed the music.", delete_after=5)
-        
-            async def stop_callback(interaction):
-                await self._guild.voice_client.disconnect()
-                await interaction.response.send_message(f"{interaction.user.name} stopped the music.", delete_after=5)
-                self.destroy(self._guild)
-
-            async def volume_callback(interaction):
-                new_volume = str(interaction.data["values"][0]).split(" ")[1]
-                self._guild.voice_client.source.volume = int(new_volume) / 100
-                await interaction.response.send_message(f"{interaction.user.name} adjusted the volume to {new_volume}.", delete_after=5)
-
-            async def skip_callback(interaction):
-                self._guild.voice_client.stop()
-                await interaction.response.send_message(f"{interaction.user.name} skipped the current song.", delete_after=5)
-
-            playpause_button = Button(label="Play/Pause", style=discord.ButtonStyle.blurple, emoji="⏯️")
-            playpause_button.callback = toggle_callback
-
-            skip_button = Button(label="Skip", style=discord.ButtonStyle.blurple, emoji="⏩")
-            skip_button.callback = skip_callback
-
-            stop_button = Button(label="Stop", style=discord.ButtonStyle.blurple, emoji="⏹️")
-            stop_button.callback = stop_callback
-
-            options = Select(placeholder="Volume 100")
-            options.add_option(label="Volume 100")
-            options.add_option(label="Volume 75")
-            options.add_option(label="Volume 50")
-            options.add_option(label="Volume 25")
-            options.add_option(label="Volume 10")
-            options.callback = volume_callback
-
-            view = View()
-            view.add_item(playpause_button)
-            view.add_item(skip_button)
-            view.add_item(stop_button)
-            view.add_item(options)"""
 
             class PlayerControl(discord.ui.View):
                 def __init__(self, guild, destroy):
