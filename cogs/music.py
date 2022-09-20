@@ -12,6 +12,7 @@ e.g You might like to implement a vote before skipping the song or only allow ad
 Music bots require lots of work, and tuning. Goodluck.
 If you find any bugs feel free to ping me on discord. @Eviee#0666
 """
+from turtle import color
 import discord
 from discord.ext import commands
 
@@ -187,7 +188,7 @@ class MusicPlayer:
 
             embed.set_author(name=source.title)
 
-            async def toggle_callback(interaction):
+            """async def toggle_callback(interaction):
                 if self._guild.voice_client.is_playing():
                     self._guild.voice_client.pause()
                     await interaction.response.send_message(f"{interaction.user.name} paused the music.", delete_after=5)
@@ -230,9 +231,52 @@ class MusicPlayer:
             view.add_item(playpause_button)
             view.add_item(skip_button)
             view.add_item(stop_button)
-            view.add_item(options)
+            view.add_item(options)"""
 
-            self.np = await self._channel.send(embed=embed, view=view)
+            class PlayerControl(discord.ui.View):
+                def __init__(self, guild, destroy):
+                    super().__init__(timeout=None)
+                    self._guild = guild
+                    self.destroy = destroy
+                
+                @discord.ui.button(label="Play/Pause", emoji="⏯", style=discord.ButtonStyle.blurple)
+                async def toggle_playback_callback(self, button, interaction):
+                    if self._guild.voice_client.is_playing():
+                        self._guild.voice_client.pause()
+                        await interaction.response.send_message(f"{interaction.user.name} paused the music.", delete_after=5)
+                    else:
+                        self._guild.voice_client.resume()
+                        await interaction.response.send_message(f"{interaction.user.name} resumed the music.", delete_after=5)
+                
+                @discord.ui.button(label="Skip", emoji="⏩", style=discord.ButtonStyle.blurple)
+                async def skip_callback(self, button, interaction):
+                    self._guild.voice_client.stop()
+                    await interaction.response.send_message(f"{interaction.user.name} skipped the current song.", delete_after=5)
+                
+                @discord.ui.button(label="Stop", emoji="⏹", style=discord.ButtonStyle.blurple)
+                async def stop_callback(self, button, interaction):
+                    await self._guild.voice_client.disconnect()
+                    await interaction.response.send_message(f"{interaction.user.name} stopped the music.", delete_after=5)
+                    self.destroy(self._guild)
+                
+                vol_options = [
+                    discord.SelectOption(label="Volume 100"),
+                    discord.SelectOption(label="Volume 75"),
+                    discord.SelectOption(label="Volume 50"),
+                    discord.SelectOption(label="Volume 25"),
+                    discord.SelectOption(label="Volume 10")
+                ]
+
+                @discord.ui.select(placeholder="Volume 100", options=vol_options)
+                async def vol_callback(self, select, interaction):
+                    new_volume = str(select.values[0]).split(" ")[1]
+                    self._guild.voice_client.source.volume = int(new_volume) / 100
+                    await interaction.response.send_message(f"{interaction.user.name} adjusted the volume to {new_volume}.", delete_after=5)
+
+
+
+
+            self.np = await self._channel.send(embed=embed, view=PlayerControl(guild=self._guild, destroy=self.destroy))
             await self.bot.change_presence(status=discord.Status.online, activity=discord.Game(name=f"{source.title}"))
             await self.next.wait()
 
@@ -446,7 +490,7 @@ class Music(commands.Cog):
         fmt = '\n'.join(f'**`{_["title"]}`**' for _ in upcoming)
         embed = discord.Embed(title=f'Upcoming - Next {len(upcoming)}', description=fmt, color=0x8080ff)
 
-        await ctx.respond(embed=embed, delete_afer=10)
+        await ctx.respond(embed=embed, ephemeral=True)
 
 
 def setup(bot):
