@@ -18,7 +18,6 @@ from discord.ext import commands
 
 from discord.commands import slash_command  # Importing the decorator that makes slash commands.
 from discord.commands import Option
-from discord.ui import View, Button, Select
 
 import asyncio
 import itertools
@@ -384,11 +383,11 @@ class Music(commands.Cog):
             ]
 
         # Keyword to return list of all stations
-        if search == "stations":
-            embed=discord.Embed(title="Speed Dial Stations", description="These are all of the saved internet radio stations.", color=0x73d251)
-            for s in stations:
-                embed.add_field(name=f"{s['stationName']} - {s['stationBio']}", value=f"Speed Dial: {s['stationID']}", inline=False)
-            return await ctx.respond(embed=embed)
+        #if search == "stations":
+        #    embed=discord.Embed(title="Speed Dial Stations", description="These are all of the saved internet radio stations.", color=0x73d251)
+        #    for s in stations:
+        #        embed.add_field(name=f"{s['stationName']} - {s['stationBio']}", value=f"Speed Dial: {s['stationID']}", inline=False)
+        #    return await ctx.respond(embed=embed)
 
         # Assumes music should be played and readies itself.
         cc = await self.channel_check(ctx)
