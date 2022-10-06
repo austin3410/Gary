@@ -21,6 +21,7 @@ All of these requirements should be added to ``config.py`` as seen in ``config-e
 - ``other_class.gif_token`` - A Giphy API Token that is used in the ``yesno.py`` cog.
 - ``other_class.serpapi_key`` - A SERPAPI key that is used in the ``gif.py`` cog.
 - All pip packages listed in ``requirements.txt``.
+- Gary uses the Wavelink library to play music and thus requires a Lavalink server.
 
 The DEV class within ``config-example.py`` is only there incase you plan on developing Gary further. If not, you can remove it.
 
