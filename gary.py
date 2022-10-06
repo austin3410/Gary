@@ -23,7 +23,7 @@ bot.serpapi_key = env.serpapi_key
 
 # Then we start to load in all of the selected cogs in the cogs folder.
 # Make sure "help" is the last element in this list.
-cogs_to_load = ["ping", "burn", "yesno", "quote", "mock", "music", "bbtcg", "meow", "subscribe", "bbtcg_games", "gif", "help"]
+cogs_to_load = ["ping", "burn", "yesno", "quote", "mock", "wavelink_music", "bbtcg", "meow", "subscribe", "bbtcg_games", "gif", "help"]
 
 if __name__ == '__main__':
     for cog in cogs_to_load:
