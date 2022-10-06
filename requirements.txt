@@ -3,3 +3,4 @@ requests
 youtube-dl
 config
 google-search-results
+wavelink
