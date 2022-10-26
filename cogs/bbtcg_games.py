@@ -471,7 +471,7 @@ class BBTCG_Games(commands.Cog):
                                 # Checks if the party size is equal to or larger than 2.
                                 if "size" in current_act.party:
                                     party_size = current_act.party["size"][0]
-                                    if party_size >= 1:
+                                    if party_size >= 2:
                                         if hasattr(member.voice, "channel"):
                                             if member.voice.channel.guild.id == guild.id:
 
@@ -480,16 +480,16 @@ class BBTCG_Games(commands.Cog):
                                                 user = self.BBTools.load_user(self, uid=member.id)
                                                 if ref_act[0] == 880218394199220334:
                                                     user["money"] += 3
-                                                    print(f"{member.name} was awarded $3 for participating in {current_act.name}!")
+                                                    #print(f"{member.name} was awarded $3 for participating in {current_act.name}!")
                                                 elif ref_act != None:
                                                     user["money"] += 5
-                                                    print(f"{member.name} was awarded $5 for participating in {current_act.name}!")
+                                                    #print(f"{member.name} was awarded $5 for participating in {current_act.name}!")
 
-                                                print(current_act.to_dict())
-                                                print(ref_act[0])
+                                                #print(current_act.to_dict())
+                                                #print(ref_act[0])
                                                 self.BBTools.save_user(self, user=user)
                     except Exception as e:
-                        print("[BBTCG Games] Something went wrong in the Activity Reward System!!")
+                        print("[BBTCG Games] Something went wrong in the Activity Reward System!")
                         print(e)
 
             # This check runs every 30 seconds.
