@@ -21,7 +21,7 @@ All of these requirements should be added to ``config.py`` as seen in ``config-e
 - ``other_class.gif_token`` - A Giphy API Token that is used in the ``yesno.py`` cog.
 - ``other_class.serpapi_key`` - A SERPAPI key that is used in the ``gif.py`` cog.
 - All pip packages listed in ``requirements.txt``.
-- Gary uses the Wavelink library to play music and thus requires a Lavalink server.
+- Gary uses the Wavelink library to play music and thus requires a Lavalink server.*
 
 The DEV class within ``config-example.py`` is only there incase you plan on developing Gary further. If not, you can remove it.
 
@@ -37,4 +37,30 @@ Gary comes with an assortment of features:
 - **SpongeBob Mock Case** - A message command to convert any previous message to mock case (will also automatically pick someone to mock)
 - **Answer Yes/No Questions** - Any @Gary message that's in the form of a Yes or No question will be answered! 
 - **Much More!**
+
+Wavelink Music
+--------------
+
+Gary uses the Wavelink Python module for its music commands which requires a connection to a Lavalink Server.
+Running a Lavalink server is fairly straight forward and can be done by following `this <https://dsharpplus.github.io/articles/audio/lavalink/setup.html>`__ link.
+
+FFMPEG Music
+------------
+Note: I won't be providing any support for the FFMPEG cog. It's only being included because it's what Gary used to use.
+
+If you are unable to host a Lavalink server or just don't want to, Gary also includes an FFMPEG based music cog which looks and works nearly the same.
+
+In order to use the FFMPEG music cog, you'll need to do the following:
+
+Within ``gary.py``:
+
+- Change the ``wavelink_music`` entry in the ``cogs_to_load`` list to ``old_music``
+
+**Windows:**
+
+Download `FFMPEG <https://ffmpeg.org/download.html>`__  and place it in Gary's root directory.
+
+**Linux:**
+
+Install FFMPEG through your preferred package manager.
 
