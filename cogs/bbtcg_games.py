@@ -5,41 +5,14 @@ from discord.ext import commands
 from discord import ButtonStyle
 from discord.ui import View, button, Item, Button
 import asyncio
-import pickle
-import os
-#import random
+from .bbtcg import BBTCG
 
 class BBTCG_Games(commands.Cog):
     # Inits the bot instance so we can do things like send messages and get other Discord information.
     def __init__(self, bot):
         self.bot = bot
+        self.BBTools = BBTCG
         self.BBTCGdir = "files//BBTCG//"
-    
-    # This function loads and returns a user file.
-    # If it can't, it creates a user file and returns it. This is basically the user joining the game.
-    def load_user(self, uid):
-        try:
-            with open(self.BBTCGdir + f"users//{uid}.pickle", "rb") as file:
-                user = pickle.load(file)
-                return user
-        except Exception as e:
-            if not os.path.exists(self.BBTCGdir + "users//"):
-                os.makedirs(self.BBTCGdir + "users//")
-            with open(self.BBTCGdir + f"users//{uid}.pickle", "wb") as file:
-                user = {"id": uid, "inventory": [], "money": 50, "earned_achievements": [], "shop_stats": {"cards_purchased": 0, "steals_purchased": 0, "cards_stolen": []},
-                        "market_stats": {"cards_purchased": 0, "cards_sold": 0, "cards_scrapped": 0}, "slots_stats": {"slots_played": 0}}
-                pickle.dump(user, file)
-                return user
-    
-    # This function saves a users file.
-    def save_user(self, user):
-        try:
-            with open(self.BBTCGdir + f"users//{user['id']}.pickle", "wb") as file:
-                pickle.dump(user, file)
-                return True
-        except Exception as e:
-            print(e)
-            return False
     
     # This is a channel check that occurs before the command is invoked
     # which prevents unintentional cooldowns.
@@ -56,8 +29,8 @@ class BBTCG_Games(commands.Cog):
         if int(bet) < 0:
             return await ctx.interaction.edit_original_message(content="Your bet must be a positive number.")
 
-        guest_user = self.load_user(guest.id)
-        host_user = self.load_user(host.id)
+        guest_user = self.BBTools.load_user(self, guest.id)
+        host_user = self.BBTools.load_user(self, host.id)
 
         # Prevents the host from betting money they don't have.
         if int(host_user["money"]) < bet:
@@ -126,7 +99,7 @@ class BBTCG_Games(commands.Cog):
             return msg
         
         # Loads the hosts user file to check if they have sufficient funds to place their bet.
-        host_user = self.load_user(host.id)
+        host_user = self.BBTools.load_user(self, host.id)
         if host_user["money"] < bet:
             msg = {"result": False, "reason": "You can't bet more money than you currently have."}
             return msg
@@ -417,13 +390,13 @@ class BBTCG_Games(commands.Cog):
             # For some reason, the timeout occurs past this point so it needs some time to return the correct variables.
             # Thus the sleep.
             await asyncio.sleep(2)
-            winner_user = self.load_user(uid=gameboard.winner["TIMEOUT_WINNER"])
-            loser_user = self.load_user(uid=gameboard.winner["TIMEOUT_LOSER"])
+            winner_user = self.BBTools.load_user(self, uid=gameboard.winner["TIMEOUT_WINNER"])
+            loser_user = self.BBTools.load_user(self, uid=gameboard.winner["TIMEOUT_LOSER"])
             await game_thread.send(f"<@{gameboard.winner['TIMEOUT_LOSER']}> failed to take their turn in the allowed time and forfeits the match!\n" \
                                     f"<@{gameboard.winner['TIMEOUT_WINNER']}> takes the pot of **${bet}**!")
         elif timeout == False and gameboard.winner != "DRAW":
-            winner_user = self.load_user(uid=gameboard.winner.id)
-            loser_user = self.load_user(uid=gameboard.loser.id)
+            winner_user = self.BBTools.load_user(self, uid=gameboard.winner.id)
+            loser_user = self.BBTools.load_user(self, uid=gameboard.loser.id)
             
             winner_user["money"] += bet
             loser_user["money"] -= bet
@@ -433,17 +406,61 @@ class BBTCG_Games(commands.Cog):
                 loser_user["money"] = 0
 
             # Saves the winner and loser with their new cash amounts.
-            loser_save = self.save_user(loser_user)
+            loser_save = self.BBTools.save_user(self, loser_user)
             if loser_save != True:
                 return print("[BBTCG GAMES] [TTT] Something went wrong saving the loser.")
 
-            winner_save = self.save_user(winner_user)
+            winner_save = self.BBTools.save_user(self, winner_user)
             if winner_save != True:
                 print("[BBTCG GAMES] [TTT] Something went wrong saving the winner.")
         
         # Waits 30 seconds before archiving the game thread. This prevents clutter.
         await asyncio.sleep(30)
         await game_thread.archive(locked=True)
+    
+    # Activity Reward System!!
+    # This system automatically rewards players for spending time in activities while in Bikini Bottom.
+    @commands.Cog.listener()
+    async def on_ready(self):
+
+        # We only need to know about Watch Together since it shouldn't reward players as much as the actual games.
+        activity_dict = [
+            {"name": "Watch Together",
+            "application_id": "880218394199220334",
+            "reward": 3}
+        ]
+        
+        while True:
+            for guild in self.bot.guilds:
+                for member in guild.members:
+
+                    # Checks if user is in ANY activites.
+                    if hasattr(member, "activities"):
+
+                        # Checks if the activity is a Discord Activites Game.
+                        if hasattr(member.activity, "application_id"):
+                            
+                            current_act = member.activity
+
+                            # Checks to see if we've set a custom profile for the activity.
+                            ref_act = [x for x in activity_dict if x["application_id"] == current_act.application_id]
+
+                            # Checks if the party size is equal to or larger than 2.
+                            party_size = current_act.party["size"][0]
+                            if party_size >= 2:
+                                
+                                # If all of the above passes this means the user is playing a Discord Activity with 1 or more other players.
+                                # Then awards the player the appropriate amount of BBTCG Cash.
+                                user = self.BBTools.load_user(self, uid=member.id)
+                                if ref_act:
+                                    user["money"] += ref_act["reward"]
+                                else:
+                                    user["money"] += 5
+                                
+                                self.BBTools.save_user(self, user=user)
+
+            # This check runs every 30 seconds.
+            await asyncio.sleep(30)
 
 # Standard bot setup.
 def setup(bot):
