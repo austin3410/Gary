@@ -422,42 +422,75 @@ class BBTCG_Games(commands.Cog):
     # This system automatically rewards players for spending time in activities while in Bikini Bottom.
     @commands.Cog.listener()
     async def on_ready(self):
-
-        # We only need to know about Watch Together since it shouldn't reward players as much as the actual games.
-        activity_dict = [
-            {"name": "Watch Together",
-            "application_id": "880218394199220334",
-            "reward": 3}
+        
+        # First ID is Watch Together.
+        activity_ids = [
+            880218394199220334,
+            755827207812677713,
+            773336526917861400,
+            814288819477020702,
+            832012774040141894,
+            879864070101172255,
+            879863881349087252,
+            832012854282158180,
+            878067389634314250,
+            902271654783242291,
+            879863686565621790,
+            879863976006127627,
+            852509694341283871,
+            832013003968348200,
+            832025144389533716,
+            945737671223947305,
+            903769130790969345,
+            947957217959759964,
+            976052223358406656,
+            950505761862189096,
+            1006584476094177371
         ]
         
         while True:
             for guild in self.bot.guilds:
                 for member in guild.members:
+                    try:
 
-                    # Checks if user is in ANY activites.
-                    if hasattr(member, "activities"):
+                        # Checks if user is in ANY activites.
+                        if hasattr(member, "activity"):
 
-                        # Checks if the activity is a Discord Activites Game.
-                        if hasattr(member.activity, "application_id"):
-                            
-                            current_act = member.activity
+                            if member.activity == None:
+                                continue
 
-                            # Checks to see if we've set a custom profile for the activity.
-                            ref_act = [x for x in activity_dict if x["application_id"] == current_act.application_id]
+                            # Checks if the activity is a Discord Activites Game.
+                            if hasattr(member.activity, "application_id"):
 
-                            # Checks if the party size is equal to or larger than 2.
-                            party_size = current_act.party["size"][0]
-                            if party_size >= 2:
-                                
-                                # If all of the above passes this means the user is playing a Discord Activity with 1 or more other players.
-                                # Then awards the player the appropriate amount of BBTCG Cash.
-                                user = self.BBTools.load_user(self, uid=member.id)
-                                if ref_act:
-                                    user["money"] += ref_act["reward"]
-                                else:
-                                    user["money"] += 5
-                                
-                                self.BBTools.save_user(self, user=user)
+                                current_act = member.activity
+
+                                # Checks to see if we've set a custom profile for the activity.
+                                ref_act = None
+                                ref_act = [x for x in activity_ids if x == int(current_act.application_id)]
+
+                                # Checks if the party size is equal to or larger than 2.
+                                if "size" in current_act.party:
+                                    party_size = current_act.party["size"][0]
+                                    if party_size >= 1:
+                                        if hasattr(member.voice, "channel"):
+                                            if member.voice.channel.guild.id == guild.id:
+
+                                                # If all of the above passes this means the user is playing a Discord Activity with 1 or more other players in same Guild as Gary.
+                                                # Then awards the player the appropriate amount of BBTCG Cash.
+                                                user = self.BBTools.load_user(self, uid=member.id)
+                                                if ref_act[0] == 880218394199220334:
+                                                    user["money"] += 3
+                                                    print(f"{member.name} was awarded $3 for participating in {current_act.name}!")
+                                                elif ref_act != None:
+                                                    user["money"] += 5
+                                                    print(f"{member.name} was awarded $5 for participating in {current_act.name}!")
+
+                                                print(current_act.to_dict())
+                                                print(ref_act[0])
+                                                self.BBTools.save_user(self, user=user)
+                    except Exception as e:
+                        print("[BBTCG Games] Something went wrong in the Activity Reward System!!")
+                        print(e)
 
             # This check runs every 30 seconds.
             await asyncio.sleep(30)
