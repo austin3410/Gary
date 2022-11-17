@@ -898,8 +898,8 @@ class BBTCG(commands.Cog):
             last_played = user["slots_stats"]["time_since_last_played"]
             
         if last_played == 0 or last_played < datetime.now() - timedelta(days=1):
-            await message.respond(f":tada: You just got $300 in rest money! :tada:", ephemeral=True)
-            user["money"] = user["money"] + 300
+            await message.respond(f":tada: You just got $200 in rest money! :tada:", ephemeral=True)
+            user["money"] = user["money"] + 200
 
         user["slots_stats"]["time_since_last_played"] = datetime.now()
         user_saved = self.save_user(user)
@@ -1049,18 +1049,56 @@ class BBTCG(commands.Cog):
         total_user_cards = len(all_user_cards)
         richest_player = None
         most_cards_player = None
+        most_achievements = None
+        most_stolen = None
+        most_slots_played = None
+        most_cards_purchased = None
+        
         if len(users) != 0:
             for player in users:
+                # Richest Player Check
                 if richest_player == None:
                     richest_player = player
                 else:
                     if int(player["money"]) > int(richest_player["money"]):
                         richest_player = player
+                
+                # Most Cards Check
                 if most_cards_player == None and len(player["inventory"]) > 0:
                     most_cards_player = player
                 elif most_cards_player != None:
                     if len(player["inventory"]) > len(most_cards_player["inventory"]):
                         most_cards_player = player
+                
+                # Most Achievements Check
+                if most_achievements == None and len(player["earned_achievements"]) > 0:
+                    most_achievements = player
+                elif most_achievements != None:
+                    if len(player["earned_achievements"]) > len(most_achievements["earned_achievements"]):
+                        most_achievements = player
+                
+                # Most Stolen Check
+                if most_stolen == None and player["shop_stats"]["steals_purchased"] > 0:
+                    most_stolen = player
+                elif most_stolen != None:
+                    if player["shop_stats"]["steals_purchased"] > most_stolen["shop_stats"]["steals_purchased"]:
+                        most_stolen = player
+                
+                # Most Slots Played Check
+                if most_slots_played == None and player["slots_stats"]["slots_played"] > 0:
+                    most_slots_played = player
+                elif most_slots_played != None:
+                    if player["slots_stats"]["slots_played"] > most_slots_played["slots_stats"]["slots_played"]:
+                        most_slots_played = player
+                
+                # Most Cards Purchased Check
+                if most_cards_purchased == None and player["shop_stats"]["cards_purchased"] > 0:
+                    most_cards_purchased = player
+                elif most_cards_purchased != None:
+                    if player["shop_stats"]["cards_purchased"] > most_cards_purchased["shop_stats"]["cards_purchased"]:
+                        most_cards_purchased = player
+
+
         # Gets the Discord users so we can retrieve their current names.
         guild = message.channel.guild
         if richest_player != None:
@@ -1068,6 +1106,18 @@ class BBTCG(commands.Cog):
 
         if most_cards_player != None:
             most_cards_player_disc_user = await guild.fetch_member(int(most_cards_player["id"]))
+        
+        if most_stolen != None:
+            most_stolen_disc_user = await guild.fetch_member(int(most_stolen["id"]))
+        
+        if most_achievements != None:
+            most_achievements_disc_user = await guild.fetch_member(int(most_achievements["id"]))
+        
+        if most_slots_played != None:
+            most_slots_played_disc_user = await guild.fetch_member(int(most_slots_played["id"]))
+        
+        if most_cards_purchased != None:
+            most_cards_purchased_disc_user = await guild.fetch_member(int(most_cards_purchased["id"]))
 
         #print(richest_player_disc_user)
         #print(most_cards_player_disc_user)
@@ -1075,18 +1125,50 @@ class BBTCG(commands.Cog):
         embed=discord.Embed(title="BBTCG Current Stats", color=0x0bf4e4)
         embed.add_field(name="Cards Remaining in Pool", value=cards_left, inline=True)
         embed.add_field(name="Cards in Market", value=cards_in_market, inline=True)
-        embed.add_field(name="User Owned Cards", value=total_user_cards, inline=True)
-        embed.add_field(name="Total Users", value=total_users, inline=True)
+        embed.add_field(name="Player Owned Cards", value=total_user_cards, inline=True)
+        embed.add_field(name="Total Players", value=total_users, inline=True)
 
-        try:
-            embed.add_field(name="Player with the Most Cash", value=f"{richest_player_disc_user.name} - ${richest_player['money']}", inline=False)
-        except:
-            embed.add_field(name="Player with the Most Cash", value=f"Nobody", inline=False)
+        if richest_player != None:
+            try:
+                embed.add_field(name="Moneybags", value=f"{richest_player_disc_user.name} - ${richest_player['money']}", inline=False)
+            except Exception as e:
+                msg = f"[BBTCG] Couldn't parse richest_player: {e}"
+                self.bot.logger.log.error(msg)
         
-        try:
-            embed.add_field(name="Player with the Most Cards", value=f"{most_cards_player_disc_user.name} - {len(most_cards_player['inventory'])}", inline=False)
-        except:
-            embed.add_field(name="Player with the Most Cards", value=f"Nobody", inline=False)
+        if most_cards_player != None:
+            try:
+                embed.add_field(name="Collector", value=f"{most_cards_player_disc_user.name} - {len(most_cards_player['inventory'])} cards", inline=False)
+            except Exception as e:
+                msg = f"[BBTCG] Couldn't parse most_cards_player: {e}"
+                self.bot.logger.log.error(msg)
+        
+        if most_stolen != None:
+            try:
+                embed.add_field(name="Bandit", value=f"{most_stolen_disc_user.name} - {most_stolen['shop_stats']['steals_purchased']} cards stolen", inline=False)
+            except Exception as e:
+                msg = f"[BBTCG] Couldn't parse most_stolen: {e}"
+                self.bot.logger.log.error(msg)
+        
+        if most_achievements != None:
+            try:
+                embed.add_field(name="Over Achiever", value=f"{most_achievements_disc_user.name} - {len(most_achievements['earned_achievements'])} achievements", inline=False)
+            except Exception as e:
+                msg = f"[BBTCG] Couldn't parse most_achievements: {e}"
+                self.bot.logger.log.error(msg)
+        
+        if most_cards_purchased != None:
+            try:
+                embed.add_field(name="Repeat Customer", value=f"{most_cards_purchased_disc_user.name} - {most_cards_purchased['shop_stats']['cards_purchased']} cards purchased", inline=False)
+            except Exception as e:
+                msg = f"[BBTCG] Couldn't parse most_cards_purchased: {e}"
+                self.bot.logger.log.error(msg)
+        
+        if most_slots_played != None:
+            try:
+                embed.add_field(name="Gambler", value=f"{most_slots_played_disc_user.name} - {most_slots_played['slots_stats']['slots_played']} rounds of slots played", inline=False)
+            except Exception as e:
+                msg = f"[BBTCG] Couldn't parse most_slots_played: {e}"
+                self.bot.logger.log.error(msg)
         
         # Sends the embed.
         return await message.respond(embed=embed)

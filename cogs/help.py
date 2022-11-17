@@ -15,6 +15,7 @@ class Help(commands.Cog):
     # The main help slash command.
     @slash_command(name="help", description="You're looking at it!")
     async def help(self, ctx, command: Option(str, description="Which command do you need help with?", autocomplete=command_autocomplete, required=False)):
+        self.bot.logger.log.info(f"{ctx.user.name} used help!")
         help_str = "```"
 
         # If a command is passed, only the help text for that command will be sent.

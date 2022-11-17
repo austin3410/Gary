@@ -408,10 +408,12 @@ class BBTCG_Games(commands.Cog):
             # Saves the winner and loser with their new cash amounts.
             loser_save = self.BBTools.save_user(self, loser_user)
             if loser_save != True:
+                self.bot.logger.log.warn("Something went wrong saving the loser.")
                 return print("[BBTCG GAMES] [TTT] Something went wrong saving the loser.")
 
             winner_save = self.BBTools.save_user(self, winner_user)
             if winner_save != True:
+                self.bot.logger.log.warn("Something went wrong saving the winner.")
                 print("[BBTCG GAMES] [TTT] Something went wrong saving the winner.")
         
         # Waits 30 seconds before archiving the game thread. This prevents clutter.
@@ -463,6 +465,8 @@ class BBTCG_Games(commands.Cog):
                             if hasattr(member.activity, "application_id"):
 
                                 current_act = member.activity
+                                if current_act.application_id == None:
+                                    continue
 
                                 # Checks to see if we've set a custom profile for the activity.
                                 ref_act = None
@@ -491,6 +495,7 @@ class BBTCG_Games(commands.Cog):
                     except Exception as e:
                         print("[BBTCG Games] Something went wrong in the Activity Reward System!")
                         print(e)
+                        self.bot.logger.log.warn(e)
 
             # This check runs every 30 seconds.
             await asyncio.sleep(30)

@@ -3,7 +3,7 @@ import sys
 import traceback
 from discord.ext import commands
 import config
-import logging
+from files.setup_logging import GaryLogging
 
 # First we load the environment classes which hold the token and id of the different Gary bots.
 try:
@@ -13,13 +13,13 @@ except:
     env = config.PRODUCTION()
 
 # Then we establish that we are using the discord.Bot lib.
-logging.basicConfig(level=logging.WARNING, filename="files//gary.log", filemode="a", format='%(asctime)s:%(levelname)8s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 intents = discord.Intents.all()
 bot = discord.Bot(intents=intents)
 bot.id = env.id
 bot.token = env.token
 bot.gif_token = env.gif_token
 bot.serpapi_key = env.serpapi_key
+bot.logger = GaryLogging()
 
 # Then we start to load in all of the selected cogs in the cogs folder.
 # Make sure "help" is the last element in this list.
@@ -33,6 +33,7 @@ if __name__ == '__main__':
             # If something goes wrong this should print that a cog failed to load.
             print(f'Failed to load cog {cog}.', file=sys.stderr)
             traceback.print_exc()
+            bot.logger.log.error(f"Failed to load cog {cog}!")
             input(" ")
 
 # When Gary is ready, this is fired.
@@ -63,6 +64,9 @@ async def on_ready():
 
         elif "MessageCommand" in str(type(command)):
             command_helps = {**command_helps, command.name: {"description": command.__dict__["__original_kwargs__"]["help"], "type": "MessageCommand"}}
+        
+        else:
+            bot.logger.log.warn(f"Failed to parse /help for {command.name}")
     
     bot.command_helps = command_helps
 
@@ -125,6 +129,7 @@ async def on_application_command_error(ctx, event):
     else:
         print(type(event))
         print(f"\nSomething caused this error:\n{event}")
+        bot.logger.log.error(f"Something caused this error: {event}")
         traceback.print_exc()        
 
 bot.run(bot.token)
