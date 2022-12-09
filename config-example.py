@@ -12,7 +12,6 @@ class DEV:
 
 class BOTH:
     def __init__(self, other_class) -> None:
-        other_class.gif_token = "GIPHY TOKEN"
         other_class.serpapi_key = "SERP API KEY"
-        other_class.openapi_key = "OPENAPI KEY"
+        other_class.openai_key = "OPENAPI KEY"
         other_class.openai_orginization = "OPENAI ORGINIZATION"
