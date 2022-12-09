@@ -51,7 +51,7 @@ class AskGary(commands.Cog):
             
             await ctx.channel.send(f'<@{ctx.author.id}> {response_text}')
     
-    @slash_command(name="image", description="Gary will use AI to generate an image with the given prompt!", guild_ids=[389818215871676418])
+    @slash_command(name="image", description="Gary will use AI to generate an image with the given prompt!")
     async def create_image(self, ctx, prompt: Option(str, description="What would you like Gary to create an image of?")):
         await ctx.defer()
         response = openai.Image.create(
