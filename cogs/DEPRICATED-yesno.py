@@ -24,7 +24,7 @@ class Yesno(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, ctx):
         if ctx.content.startswith(f"<@!{self.bot.id}>"):
-            try:
+            """try:
 
                 # This should be all or at least most of the words that start a question.
                 valid_kwords = ["DID", "SHOULD", "WILL", "CAN", "ARE", "IS", "AM", "CAN'T", "CANT", "COULD", "DOES", "HAS", "HAVE", "WERE", "WOULD", "DO"]
@@ -45,7 +45,9 @@ class Yesno(commands.Cog):
                         gif = self.get_gif("i don't care")
                         await ctx.channel.send(f"¯\_(ツ)_/¯\nI DON'T CARE!\n{str(gif)}")
             except:
-                pass
+                pass"""
+            
+            r = request("GET", "https://api.openai.com/v1/completions", headers=headers, params=)
 
 # Standard bot setup.
 def setup(bot):

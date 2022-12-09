@@ -18,8 +18,9 @@ All of these requirements should be added to ``config.py`` as seen in ``config-e
 
 - ``self.id`` - Your Discord Bot ID.
 - ``self.token`` - Your Discord Bot Token.
-- ``other_class.gif_token`` - A Giphy API Token that is used in the ``yesno.py`` cog.
-- ``other_class.serpapi_key`` - A SERPAPI key that is used in the ``gif.py`` cog.
+- ``other_class.serpapi_key`` - A `SERPAPI <https://serpapi.com/>`__ API key used in the ``gif.py`` cog.
+- ``other_class.openai_key`` - An `OpenAI <https://beta.openai.com/>`__ API key used in the ``askgary.py`` cog.
+- ``other_class.openai_orginization`` - Your users `OpenAI <https://beta.openai.com/>`__ orginization used in the ``askgary.py`` cog.
 - All pip packages listed in ``requirements.txt``.
 - Gary uses the Wavelink library to play music and thus requires a Lavalink server.*
 
@@ -35,7 +36,8 @@ Gary comes with an assortment of features:
 - **Interactive Music Player** - A music player with buttons and menus, instead of all slash commands.
 - **Subscription Channels** - Integrated system to let users subscribe to different channels to keep unwanted notifications and spoilers out of their feed.
 - **SpongeBob Mock Case** - A message command to convert any previous message to mock case (will also automatically pick someone to mock)
-- **Answer Yes/No Questions** - Any @Gary message that's in the form of a Yes or No question will be answered! 
+- **ChatGPT Powered AI Responses** - Any @Gary message is routed through ChatGPT for seemless AI answers, right in Discord!
+- **ChatGPT Powered AI Image Generation** - Use ChatGPT to generate AI images!
 - **Much More!**
 
 Wavelink Music

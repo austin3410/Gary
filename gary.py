@@ -19,11 +19,13 @@ bot.id = env.id
 bot.token = env.token
 bot.gif_token = env.gif_token
 bot.serpapi_key = env.serpapi_key
+bot.openai_key = env.openai_key
+bot.openai_orginization = env.openai_orginization
 bot.logger = GaryLogging()
 
 # Then we start to load in all of the selected cogs in the cogs folder.
 # Make sure "help" is the last element in this list.
-cogs_to_load = ["ping", "burn", "yesno", "quote", "mock", "wavelink_music", "bbtcg", "meow", "subscribe", "bbtcg_games", "gif", "help"]
+cogs_to_load = ["ping", "burn", "askgary", "quote", "mock", "wavelink_music", "bbtcg", "subscribe", "bbtcg_games", "gif", "meow", "help"]
 
 if __name__ == '__main__':
     for cog in cogs_to_load:
