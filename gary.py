@@ -17,7 +17,6 @@ intents = discord.Intents.all()
 bot = discord.Bot(intents=intents)
 bot.id = env.id
 bot.token = env.token
-bot.gif_token = env.gif_token
 bot.serpapi_key = env.serpapi_key
 bot.openai_key = env.openai_key
 bot.openai_orginization = env.openai_orginization
