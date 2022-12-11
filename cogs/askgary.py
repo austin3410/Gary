@@ -1,9 +1,11 @@
 
+import os
 import discord
 from discord.commands import slash_command  # Importing the decorator that makes slash commands.
 from discord.ext import commands
 import openai
 from discord.commands import Option
+import requests
 
 class ImageViewer(discord.ui.View):
     def __init__(self, img_url, timeout=None):
@@ -12,8 +14,16 @@ class ImageViewer(discord.ui.View):
     
     @discord.ui.button(label="Save", emoji="💾", style=discord.ButtonStyle.success)
     async def save_image(self, button, interaction):
-        await interaction.user.send(self.img_url)
+        #await interaction.user.send(self.img_url)
+        r = requests.get(self.img_url)
+
+        with open(f"files//ai_images//{interaction.user.id}.png",'wb') as f:
+            f.write(r.content)
+        with open(f"files//ai_images//{interaction.user.id}.png", "rb") as f:
+            pic = discord.File(f)
+            await interaction.user.send(file=pic)
         await interaction.response.send_message(f"I've sent you this image!", ephemeral=True)
+        os.remove(f"files//ai_images//{interaction.user.id}.png")
     
     """@discord.ui.Button(label="Revise", emoji="🤩", style=discord.ButtonStyle.blurple)
     async def revise_image(self, button, interaction: discord.Interaction):
@@ -42,12 +52,13 @@ class AskGary(commands.Cog):
                     model="text-davinci-003",
                     prompt=question,
                     temperature=0.9,
-                    max_tokens=100,
+                    max_tokens=4000,
                     top_p=1,
                     frequency_penalty=0.0,
                     presence_penalty=0.0
                 )
-                response_text = response["choices"][0]["text"].replace("\n", "")
+                response_text = response["choices"][0]["text"]
+                print(response)
             
             await ctx.channel.send(f'<@{ctx.author.id}> {response_text}')
     
