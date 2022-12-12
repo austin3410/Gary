@@ -91,7 +91,6 @@ class AskGary(commands.Cog):
             async with ctx.channel.typing():
                 question = str(ctx.content).replace("<@704812476184788992>", "")
                 question = f"{ctx.author.name} asks, hey Gary," + question
-                print(question)
                 response = openai.Completion.create(
                     model="text-davinci-003",
                     prompt=question,
