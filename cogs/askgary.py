@@ -57,9 +57,10 @@ class ImageViewer(discord.ui.View):
     
     @discord.ui.button(label="Save", emoji="💾", style=discord.ButtonStyle.success)
     async def save_image(self, button, interaction):
-
-        await interaction.user.send(self.img_url)
-        return await interaction.response.send_message(f"I've sent you this image!", ephemeral=True)
+        
+        msg = await interaction.user.send(self.img_url)
+        await interaction.message.add_reaction(emoji="⭐")
+        return await interaction.response.send_message(f"I've DM'd you this image!\n{msg.jump_url}", ephemeral=True)
         
     # Disabled for now because OpenAI's docs suck.
     """@discord.ui.button(label="Revise", emoji="🤩", style=discord.ButtonStyle.blurple)
@@ -84,6 +85,10 @@ class AskGary(commands.Cog):
         openai.orginization = self.bot.openai_orginization
         openai.api_key = self.bot.openai_key
     
+    #@commands.Cog.listener()
+    #async def on_ready(self):
+    #    self.bot.add_view(ImageViewer())
+    
     # This decorator and function fires everytime a message is sent that @'s Gary.
     @commands.Cog.listener()
     async def on_message(self, ctx):
@@ -102,7 +107,7 @@ class AskGary(commands.Cog):
                 )
                 response_text = response["choices"][0]["text"]
                 response_text = str(response_text).replace(f"{ctx.author.name}", f"<@{ctx.author.id}>")
-
+                
                 return await ctx.reply(f'{response_text}')
 
 
@@ -110,12 +115,18 @@ class AskGary(commands.Cog):
     @slash_command(name="image", description="Gary will use AI to generate an image with the given prompt!")
     async def create_image(self, ctx, prompt: Option(str, description="What would you like Gary to create an image of?")):
         await ctx.defer()
-        response = openai.Image.create(
-          prompt=prompt,
-          n=1,
-          size="1024x1024"
-        )
-        image_url = response['data'][0]['url']
+        try:
+            response = openai.Image.create(
+              prompt=prompt,
+              n=1,
+              size="1024x1024"
+            )
+            image_url = response['data'][0]['url']
+        except Exception as e:
+            if "safety system" in str(e):
+                return await ctx.followup.send("Your prompt was rejected by the safety team. Try altering your request!", delete_after=30)
+            else:
+                return await ctx.followup.send("I couldn't complete the request at this time, please try again!", delete_after=30)
 
         data = await get_image_file(image_url)
 
