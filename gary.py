@@ -24,7 +24,7 @@ bot.logger = GaryLogging()
 
 # Then we start to load in all of the selected cogs in the cogs folder.
 # Make sure "help" is the last element in this list.
-cogs_to_load = ["ping", "burn", "askgary", "quote", "mock", "wavelink_music", "bbtcg", "subscribe", "bbtcg_games", "gif", "meow", "help"]
+cogs_to_load = ["ping", "burn", "askgary", "quote", "mock", "wavelink_music", "bbtcg", "subscribe", "bbtcg_games", "meow", "gif", "help"]
 
 if __name__ == '__main__':
     for cog in cogs_to_load:
