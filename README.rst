@@ -34,7 +34,6 @@ Gary comes with an assortment of features:
 - **Bikini Bottom Trading Card Game** -  BBTCG is a game about buying, selling, and stealing trading cards in the form of different Bikini Bottom characters.
 - **GIF** - A better ``/gif`` command that uses Google as its search backend.
 - **Interactive Music Player** - A music player with buttons and menus, instead of all slash commands.
-- **Subscription Channels** - Integrated system to let users subscribe to different channels to keep unwanted notifications and spoilers out of their feed.
 - **SpongeBob Mock Case** - A message command to convert any previous message to mock case (will also automatically pick someone to mock)
 - **ChatGPT Powered AI Responses** - Any @Gary message is routed through ChatGPT for seemless AI answers, right in Discord!
 - **ChatGPT Powered AI Image Generation** - Use ChatGPT to generate AI images!
@@ -66,3 +65,12 @@ Download `FFMPEG <https://ffmpeg.org/download.html>`__  and place it in Gary's r
 
 Install FFMPEG through your preferred package manager.
 
+DEPRICATED FEATURES
+-------------------
+Some features have been replaced with better versions or removed entirely and replaced by native Discord integrations.
+If you wish to re-activate these features, simply add the file name to Gary's ``cogs_to_load`` list in ``gary.py``.
+
+**NOTE:** These features may work after re-activation, but will not be supported moving forward and are provided as is.
+
+- ``DEPRICATED-subscribe.py`` - Replaced by Discord's Forum Channels. This featured allowed users to see channels that they were interested in and be hidden from ones they weren't.
+- ``DEPRICATED-yesno.py`` - Replaced by ``askgary.py``. This feature allowed users to @Gary with a Yes or No question which would be answered by Gary.
