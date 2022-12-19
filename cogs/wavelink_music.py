@@ -123,7 +123,8 @@ class Music(commands.Cog):
             print("[WaveLink] Song played immediately.")
             return await self.vc.play(song)
         
-        print("[WaveLink] play_song END NO RETURNS")
+        print("[WaveLink] play_song END PLAYING SONG")
+        return await self.vc.play(song)
     
     # This triggers when a track finishes playing (whether it finishes naturally, or is stopped early).
     @commands.Cog.listener()
