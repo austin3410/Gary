@@ -38,8 +38,8 @@ class PlayerControl(discord.ui.View):
                 async def queue_callback(self, button, interaction):
                     
                     queue_msg = ""
-
-                    if self.vc.queue != []:
+                    print(self.vc.queue)
+                    if self.vc.queue != ():
                         for song in self.vc.queue:
                             if song == self.vc.queue[0]:
 
