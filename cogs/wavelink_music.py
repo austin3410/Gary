@@ -8,7 +8,7 @@ class PlayerControl(discord.ui.View):
                 def __init__(self, vc: wavelink.Player):
                     super().__init__(timeout=None)
                     self.vc = vc
-                    self.bot.logger.log.info("[WaveLink] PlayerControl initialized.")
+                    print("[WaveLink] PlayerControl initialized.")
                 
                 @discord.ui.button(label="Play/Pause", emoji="⏯", style=discord.ButtonStyle.blurple)
                 async def toggle_playback_callback(self, button, interaction):
@@ -67,7 +67,7 @@ class Music(commands.Cog):
             if channel.name == "music_requests":
                 self.mr_channel = channel
                 await self.create_node()
-                self.bot.logger.log.info("[WaveLink] Node created, mr_channel found.")
+                print("[WaveLink] Node created, mr_channel found.")
                 break
         
         if self.mr_channel == None:
@@ -104,7 +104,7 @@ class Music(commands.Cog):
         else:
             vc = self.vc
 
-        self.bot.logger.log.info("[WaveLink] VC created/found and returned.")
+        print("[WaveLink] VC created/found and returned.")
         return vc
     
     # This determines whether a song should be played immediately or put into the queue.
@@ -113,17 +113,20 @@ class Music(commands.Cog):
             return print("Can't play song. Self doesn't contain a voice_client.")
 
         if self.vc.is_playing() == True or self.vc.is_paused() == True:
-            self.bot.logger.log.info("[WaveLink] Song placed in queue.")
-            return self.vc.queue.put(song)
+            print("[WaveLink] Song placed in queue.")
+            self.vc.queue.put(song)
+            print(self.vc.queue)
+            return
         
         if self.vc.queue.is_empty:
-            self.bot.logger.log.info("[WaveLink] Song played immediately.")
+            print("[WaveLink] Song played immediately.")
             await self.vc.play(song)
     
     # This triggers when a track finishes playing (whether it finishes naturally, or is stopped early).
     @commands.Cog.listener()
     async def on_wavelink_track_end(self, player: wavelink.Player, track: wavelink.Track, reason):
-        self.bot.logger.log.info("[WaveLink] TRACK END!")
+        print("[WaveLink] TRACK END!")
+        print(self.vc.queue)
         # If the queue isn't empty, get the next song and play it.
         if not self.vc.queue.is_empty:
             next_song = self.vc.queue.get()
@@ -146,7 +149,7 @@ class Music(commands.Cog):
     # This sets Gary's status, then generates and sends the PlayerControl class.
     @commands.Cog.listener()
     async def on_wavelink_track_start(self, player: wavelink.Player, track: wavelink.YouTubeTrack):
-        self.bot.logger.log.info("[WaveLink] TRACK START")
+        print("[WaveLink] TRACK START")
         await self.bot.change_presence(status=discord.Status.online, activity=discord.Game(name=f"{track.title}"))
         embed = discord.Embed(title=track.title, color=0x00ff00)
         embed.set_image(url=f"http://img.youtube.com/vi/{track.identifier}/0.jpg")
@@ -170,7 +173,7 @@ class Music(commands.Cog):
             return await ctx.respond("You must be in the same channel as Gary!", ephemeral=True)
         else:
             await self.play_song(song)
-            self.bot.logger.log.info("[WaveLink] Song played/added to queue.")
+            print("[WaveLink] Song played/added to queue.")
             return await ctx.respond(f"Adding `{song.title}` to the queue.", delete_after=5)
     
 # Standard bot setup.
