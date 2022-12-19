@@ -109,6 +109,7 @@ class Music(commands.Cog):
     
     # This determines whether a song should be played immediately or put into the queue.
     async def play_song(self, song: wavelink.YouTubeTrack):
+        print("[WaveLink] STARTING play_song")
         if self.vc == None:
             return print("Can't play song. Self doesn't contain a voice_client.")
 
@@ -120,7 +121,9 @@ class Music(commands.Cog):
         
         if self.vc.queue.is_empty:
             print("[WaveLink] Song played immediately.")
-            await self.vc.play(song)
+            return await self.vc.play(song)
+        
+        print("[WaveLink] play_song END NO RETURNS")
     
     # This triggers when a track finishes playing (whether it finishes naturally, or is stopped early).
     @commands.Cog.listener()
@@ -131,6 +134,7 @@ class Music(commands.Cog):
         # If the queue isn't empty, get the next song and play it.
         if not self.vc.queue.is_empty:
             next_song = self.vc.queue.get()
+            print(f"[WaveLink] NEXT TRACK: {next_song.info}!")
             await self.play_song(next_song)
             print("[WaveLink] PLAYING NEXT!")
             return
