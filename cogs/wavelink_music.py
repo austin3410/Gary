@@ -127,10 +127,12 @@ class Music(commands.Cog):
     async def on_wavelink_track_end(self, player: wavelink.Player, track: wavelink.Track, reason):
         print("[WaveLink] TRACK END!")
         print(self.vc.queue)
+        print("[WaveLink] STARTING TRACK END WORK!")
         # If the queue isn't empty, get the next song and play it.
         if not self.vc.queue.is_empty:
             next_song = self.vc.queue.get()
             await self.play_song(next_song)
+            print("[WaveLink] PLAYING NEXT!")
             return
         
         # If the queue is empty, clear the playing status, disconnect from the channel and clear self.vc.
@@ -143,7 +145,10 @@ class Music(commands.Cog):
             await self.bot.change_presence(status=discord.Status.online)
             await self.vc.disconnect()
             self.vc = None
+            print("[WaveLink] DISCONNECTING!")
             return
+        
+        print("[WaveLink] NOTHING!")
 
     # This triggers when a track starts playing.
     # This sets Gary's status, then generates and sends the PlayerControl class.
