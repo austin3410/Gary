@@ -9,7 +9,7 @@ class PlayerControl(discord.ui.View):
                 def __init__(self, vc: wavelink.Player):
                     super().__init__(timeout=None)
                     self.vc = vc
-                    print("[WaveLink] PlayerControl initialized.")
+                    #print("[WaveLink] PlayerControl initialized.")
                 
                 @discord.ui.button(label="Play/Pause", emoji="⏯", style=discord.ButtonStyle.blurple)
                 async def toggle_playback_callback(self, button, interaction):
