@@ -36,12 +36,20 @@ class PlayerControl(discord.ui.View):
                 
                 @discord.ui.button(label="Queue", emoji="📃", style=discord.ButtonStyle.blurple)
                 async def queue_callback(self, button, interaction):
-                    queue_msg = ""
 
-                    for song in self.vc.queue:
-                        queue_msg += f"``{song}``\n"
-                    
-                    await interaction.response.send_message(f"Here's the queue:\n{queue_msg}", delete_after=15)
+                    if self.vc.queue != []:
+                        queue_msg = ""
+
+                        for song in self.vc.queue:
+                            if song == self.vc.queue[0]:
+
+                                queue_msg += f"Coming up next:\n``{song}``\nAfter that:\n"
+                            else:
+                                queue_msg += f"``{song}``\n"
+
+                        return await interaction.response.send_message(queue_msg, delete_after=15)
+                    else:
+                        return await interaction.response.send_message(f"There's nothing in queue! Use /play to add something!")
                 
                 vol_options = [
                     discord.SelectOption(label="Volume 100"),
