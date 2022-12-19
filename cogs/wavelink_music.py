@@ -34,6 +34,15 @@ class PlayerControl(discord.ui.View):
                     await interaction.response.send_message(f"{interaction.user.name} stopped the music.", delete_after=5)
                     self.stop()
                 
+                @discord.ui.button(label="Queue", emoji="📃", style=discord.ButtonStyle.blurple)
+                async def queue_callback(self, button, interaction):
+                    queue_msg = ""
+
+                    for song in self.vc.queue:
+                        queue_msg += f"``{song}``\n"
+                    
+                    await interaction.response.send_message(f"Here's the queue:\n{queue_msg}", delete_after=15)
+                
                 vol_options = [
                     discord.SelectOption(label="Volume 100"),
                     discord.SelectOption(label="Volume 75"),
