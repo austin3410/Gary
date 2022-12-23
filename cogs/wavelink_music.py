@@ -214,11 +214,11 @@ class Music(commands.Cog):
         if vc == None:
             return
         if vc.channel != ctx.author.voice.channel:
-            return await ctx.respond("You must be in the same channel as Gary!", ephemeral=True)
+            return await self.mr_channel.send("You must be in the same channel as Gary!", ephemeral=True)
         else:
             await self.play_song(song)
             #print("[WaveLink] Song played/added to queue.")
-            return await ctx.respond(f"Adding `{song.title}` to the queue.", delete_after=5)
+            return await self.mr_channel.send(f"Adding `{song.title}` to the queue.", delete_after=5)
     
 # Standard bot setup.
 def setup(bot):
