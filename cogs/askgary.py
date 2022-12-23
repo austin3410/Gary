@@ -6,6 +6,9 @@ import openai
 from discord.commands import Option
 import io
 import aiohttp
+import re
+import asyncio
+from . import wavelink_music
 
 async def get_image_file(img_url):
     async with aiohttp.ClientSession() as session:
@@ -85,14 +88,17 @@ class AskGary(commands.Cog):
         openai.orginization = self.bot.openai_orginization
         openai.api_key = self.bot.openai_key
     
-    #@commands.Cog.listener()
-    #async def on_ready(self):
-    #    self.bot.add_view(ImageViewer())
-    
     # This decorator and function fires everytime a message is sent that @'s Gary.
     @commands.Cog.listener()
     async def on_message(self, ctx):
-        if ctx.content.startswith(f"<@{self.bot.id}>"):
+        if ctx.content.startswith(f"<@{self.bot.id}>") and ctx.author.id != self.bot.id:
+            if "PLAY" in ctx.content.upper() and "SONG" in ctx.content.upper():
+                play_music = True
+            else:
+                play_music = False
+            print(play_music)
+
+
             async with ctx.channel.typing():
                 question = str(ctx.content).replace("<@704812476184788992>", "")
                 question = f"{ctx.author.name} asks, hey Gary," + question
@@ -107,6 +113,32 @@ class AskGary(commands.Cog):
                 )
                 response_text = response["choices"][0]["text"]
                 response_text = str(response_text).replace(f"{ctx.author.name}", f"<@{ctx.author.id}>")
+
+                if play_music == True:
+                    songs = []
+                    print(response_text)
+                    matches = re.findall(r'(".+") by ([^.]+)', response_text, re.M)
+                    for x in matches:
+                        if "\n" in x[1]:
+                            song = {"name": x[0], "author": x[1][0:-2]}
+                        else:
+                            song = {"name": x[0], "author": x[1]}
+                        
+                        songs.append(song)
+                    print(matches)
+                    print(songs)
+
+                    for song in songs:
+                        search_query = f"{song['name']} - {song['author']}"
+                        music = wavelink_music.Music(bot=self.bot)
+                        await music.bot_play(ctx, search_query)
+                        print("Invoked Command")
+                        print(song)
+                        await asyncio.sleep(10)
+
+
+
+
                 
                 return await ctx.reply(f'{response_text}')
 
