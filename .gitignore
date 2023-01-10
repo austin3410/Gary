@@ -6,14 +6,10 @@ files/spongebob_quotes_custom.txt
 cogs/__pycache__
 cogs/__pycache__/
 files/mock_time.txt
-files/expire/messages.pickle
-files/kojima_names
-files/kojima_names/
 .vscode
 files/BBTCG/cards/*
 files/BBTCG/users/*
 files/BBTCG/__pycache__
 gary.log
-files/logs/
-files/logs/*
+files/logs/gary.log
 testing/

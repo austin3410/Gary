@@ -67,7 +67,7 @@ class BBTCG(commands.Cog):
                     break
             # Assigns the cards price, seller, and seller_id.
             for c in drop:
-                c["seller"] = "Bikini Bottom Dweller"
+                c["seller"] = "someone"
                 c["seller_id"] = 0
                 c["selling_start_time"] = datetime.now()
                 firesale = random.randint(0, 145)
@@ -468,6 +468,116 @@ class BBTCG(commands.Cog):
         await self.auto_market()
         return await message.respond("Market renewed.", ephemeral=True, delete_after=3)
     
+    # ADJUST USER CASH Command
+    @user_command(name="Adjust Cash", help="Adjusts a user BBTCG cash.", guild_ids=[389818215871676418])
+    @default_permissions(administrator=True)
+    async def bbtcg_adjust(self, ctx, member: Option(discord.Member, description="Target user ID.")):
+
+        class AddCash(discord.ui.Modal):
+            def __init__(self, member, *args, **kwargs) -> None:
+                super().__init__(*args, **kwargs)
+                self.member = member
+                self.add_item(discord.ui.InputText(custom_id="amount", label="Amount:", placeholder="0", required=True, ))
+            
+            async def callback(self, interaction: discord.Interaction):
+                self.stop()
+                await interaction.response.edit_message(content="Working...", view=None)
+        
+        class SubCash(discord.ui.Modal):
+            def __init__(self, member, *args, **kwargs) -> None:
+                super().__init__(*args, **kwargs)
+                self.member = member
+                self.add_item(discord.ui.InputText(custom_id="amount", label="Amount:", placeholder="0", required=True))
+            
+            async def callback(self, interaction: discord.Interaction):
+                self.stop()
+                await interaction.response.edit_message(content="Working...", view=None)
+        
+        class SetCash(discord.ui.Modal):
+            def __init__(self, member, *args, **kwargs) -> None:
+                super().__init__(*args, **kwargs)
+                self.member = member
+                self.add_item(discord.ui.InputText(custom_id="amount", label="Amount:", placeholder="0", required=True))
+            
+            async def callback(self, interaction: discord.Interaction):
+                self.stop()
+                await interaction.response.edit_message(content="Working...", view=None)
+
+        class AdjustUser(discord.ui.View):
+            def __init__(self, member, *args, **kwargs) -> None:
+                super().__init__(*args, **kwargs)
+                
+                self.member = member
+                self.value = None
+
+            @discord.ui.button(label="Add", style=discord.ButtonStyle.green)
+            async def add_button(self, button, interaction):
+                modal = AddCash(member=member, title="Give BBTCG Cash")
+
+                await interaction.response.send_modal(modal)
+                await modal.wait()
+
+                amount = modal.children[0].value
+
+                self.value = {"action": "add", "amount": amount}
+                self.stop()
+                return
+            
+            @discord.ui.button(label="Subtract", style=discord.ButtonStyle.danger)
+            async def sub_button(self, button, interaction):
+                modal = SubCash(member=member, title="Subtract BBTCG Cash")
+
+                await interaction.response.send_modal(modal)
+                await modal.wait()
+
+                amount = modal.children[0].value
+
+                self.value = {"action": "sub", "amount": amount}
+                self.stop()
+                return
+            
+            @discord.ui.button(label="Set", style=discord.ButtonStyle.blurple)
+            async def set_button(self, button, interaction):
+                modal = SetCash(member=member, title="Set BBTCG Cash")
+
+                await interaction.response.send_modal(modal)
+                await modal.wait()
+
+                amount = modal.children[0].value
+
+                self.value = {"action": "set", "amount": amount}
+                self.stop()
+                return
+        
+        user = self.load_user(member.id)
+        member_menu = f"Member: {member.name}\nMember ID: {user['id']}\nMoney: **${user['money']}**"
+        
+        adjustuser_menu = AdjustUser(member=member)
+        msg = await ctx.respond(member_menu, view=adjustuser_menu, ephemeral=True)
+        await adjustuser_menu.wait()
+        await asyncio.sleep(1)
+
+        try:
+            amount = int(adjustuser_menu.value["amount"])
+        except:
+            return await msg.edit_original_message(content=f"Amount must be in integer!", view=None)
+
+        if adjustuser_menu.value["action"] == "add":
+            user["money"] += amount
+        
+        elif adjustuser_menu.value["action"] == "sub":
+            user["money"] -= amount
+        
+        elif adjustuser_menu.value["action"] == "set":
+            user["money"] = amount
+        
+        saved_user = self.save_user(user)
+
+        if saved_user == True:
+            return await msg.edit_original_message(content=f"Done! :white_check_mark:", view=None)
+        else:
+            return await msg.edit_original_message(content=f"An error occurred!", view=None)
+    
     # ACHIEVEMENTS command - Send the user a list of all of their earned achievements.
     @slash_command(name="achievements", description="Shows you your current BBTCG Achievements.", 
     help="achievements - ~This shows you all of the BBTCG Achievements you've earned so far this game.\nAchievements reset when a new game starts.")
@@ -653,9 +763,11 @@ class BBTCG(commands.Cog):
         return await ctx.respond(f"I will create your market post for Card no. **{card_to_sell['num']}** in **5 minutes**!")
     
     @market.command(description="Buys a card on the BBTCG market.")
+    @cooldown(1, 180, commands.BucketType.user)
     async def buy(self, ctx, cardno: Option(int, description="Card no you want to buy.")):
         cc = await self.channel_check(ctx, "bbtcg")
         if cc == False:
+            self.buy.reset_cooldown(ctx)
             return
         
         market = self.load_market()
@@ -663,6 +775,7 @@ class BBTCG(commands.Cog):
         
         # Checks to make sure the specified card is actually on the market.
         if card_to_buy == None:
+            self.buy.reset_cooldown(ctx)
             return await ctx.respond("That card isn't on the market. Maybe someone already bought it?", ephemeral=True)
         
         # Loads the buyer
@@ -676,10 +789,12 @@ class BBTCG(commands.Cog):
         
         # Checks to ensure the buyer has sufficient funds.
         if int(buyer["money"]) < int(card_to_buy["selling_price"]):
+            self.buy.reset_cooldown(ctx)
             return await ctx.respond("You don't have enough for that!", ephemeral=True)
         
         # Checks to make sure the buyer isn't attempting to purchase their own card.
         elif buyer["id"] == seller["id"]:
+            self.buy.reset_cooldown(ctx)
             return await ctx.respond("You can't buy your own listing. Cancel it instead with:\n/market cancel <Card no.>", ephemeral=True)
         
         # Performs the actual transaction in terms of $.
@@ -708,6 +823,7 @@ class BBTCG(commands.Cog):
         
         # Checks to make sure the saves completed.
         if saved_buyer != True or saved_market != True or saved_seller != True:
+            self.buy.reset_cooldown(ctx)
             return print("Something went wrong with BUY!")
         
         await ctx.respond(f"Successfully purchased Card no. {card_to_buy['num']} from the market!")
@@ -887,7 +1003,7 @@ class BBTCG(commands.Cog):
     @slash_command(name="slots", description="Plays slots for BBTCG cash! Use in #slots.")
     @check(before_invoke_channel_check)
     @dynamic_cooldown(cooldown=slots_cooldown, type=commands.BucketType.user)
-    async def bbtcg_slots(self, message, spins: Option(int, description="How many spins would you like? Defaults to 20.", min_value=1, max_value=20, default=20, required=False)):
+    async def bbtcg_slots(self, message, spins: Option(int, description="How many spins would you like? Defaults to 20. Buy in is $5.", min_value=1, max_value=20, default=20, required=False)):
 
         user = self.load_user(message.author.id)
 
@@ -898,8 +1014,10 @@ class BBTCG(commands.Cog):
             last_played = user["slots_stats"]["time_since_last_played"]
             
         if last_played == 0 or last_played < datetime.now() - timedelta(days=1):
-            await message.respond(f":tada: You just got $200 in rest money! :tada:", ephemeral=True)
+            rest_bonus = True
             user["money"] = user["money"] + 200
+        else:
+            rest_bonus = False
 
         user["slots_stats"]["time_since_last_played"] = datetime.now()
         user_saved = self.save_user(user)
@@ -914,6 +1032,8 @@ class BBTCG(commands.Cog):
 
         buy_in = 5 * spins
         thread = await message.channel.create_thread(name=f"{message.author.name}'s Slots Match", type=discord.ChannelType.public_thread)
+        if rest_bonus == True:
+            await thread.send(f":tada: You just got $200 in rest money! :tada:")
         # Loads the user and makes sure they have enough money to play.
         if user["money"] < buy_in:
             self.bot.get_application_command("slots").reset_cooldown(message)
@@ -1179,8 +1299,12 @@ class BBTCG(commands.Cog):
     @cooldown(5, 3600, commands.BucketType.user)
     async def bbtcg_store(self, ctx):
         
-        # Loads users and cards
-        user = self.load_user(ctx.author.id)
+        def load_user():
+            # Loads users and cards
+            user = self.load_user(ctx.author.id)
+            return user
+        
+        user = load_user()
         cards = self.load_cards()
 
         # Calculates the draw_card_price by multipling the average value of all remaining cards by 1.1.
@@ -1201,6 +1325,8 @@ class BBTCG(commands.Cog):
         stealable_users = []
         for user_file in user_files:
             if user_file == "0.pickle":
+                pass
+            elif str(user["id"]) in user_file:
                 pass
             else:
                 temp_user = self.load_user(user_file.replace(".pickle", ""))
@@ -1254,19 +1380,33 @@ class BBTCG(commands.Cog):
 
         # This is the Store class which houses the button functions.
         class Store(discord.ui.View):
-            def __init__(self):
+            def __init__(self, user):
                 super().__init__()
 
                 # We need this variable to refer to the users action later.
                 self.value = None
+                self.user = user
 
+            async def interaction_check(self, interaction: discord.Interaction) -> bool:
+                user = load_user()
+                if int(self.user["money"]) != int(user["money"]):
+                    return False
+                else:
+                    return True
+            
+            async def on_check_failure(self, interaction: discord.Interaction) -> None:
+                self.clear_items()
+                await interaction.response.edit_message(content="Your balance has changed! Please use /store again!", view=self)
+                self.stop()
+                return
+            
             # These buttons are nearly identical, just return different values and look different. 
             # The important things is the self.stop(). This will close the interaction after a successful button press.
             @discord.ui.button(label=store_draw_card_label, style=store_draw_card_style, disabled=store_draw_card_disabled)
             async def store_draw_card(self, button: discord.ui.Button, interaction: discord.Interaction):
                 
                 # Checks if the user has enough cash.
-                if user["money"] < draw_card_price:
+                if self.user["money"] < draw_card_price:
                     await ctx.respond("You don't have enough cash for that!", ephemeral=True)
                 else:
                     self.value = {"action": "DRAW"}
@@ -1276,9 +1416,10 @@ class BBTCG(commands.Cog):
             
             @discord.ui.button(label=random_steal_price_label, style=random_steal_price_style, disabled=random_steal_price_disabled)
             async def store_steal_card(self, button: discord.ui.Button, interaction: discord.Interaction):
+                self.user = load_user()
                 
                 # Checks if the user has enough cash.
-                if user["money"] < random_steal_price:
+                if self.user["money"] < random_steal_price:
                     await ctx.respond("You don't have enough cash for that!", ephemeral=True)
                 else:
                     self.value = {"action": "STEAL"}
@@ -1298,7 +1439,7 @@ class BBTCG(commands.Cog):
                             user_card_value += c["value"]
                             user_card_count += 1
                         targeted_steal_price = round((user_card_value // user_card_count) * 1.5)
-                        if user["money"] < targeted_steal_price:
+                        if self.user["money"] < targeted_steal_price:
                             continue
                         description = f"${targeted_steal_price}"
                         temp_discord_user = await interaction.channel.guild.fetch_member(stealable_user["id"])
@@ -1306,8 +1447,9 @@ class BBTCG(commands.Cog):
                     
                     await interaction.response.edit_message(view=self)
                 else:
+                    self.user = load_user()
                     # Checks if the user has enough cash.
-                    if user["money"] < random_steal_price:
+                    if self.user["money"] < random_steal_price:
                         await ctx.respond("You don't have enough cash for that!", ephemeral=True)
                     
                     self.value = {"action": "TARGETED_STEAL", "user": str(view._selected_values[0]).split(" ")[0], "price": str(view._selected_values[0]).split(" ")[1]}
@@ -1317,7 +1459,7 @@ class BBTCG(commands.Cog):
                 
 
         # Establishes the Store class as a view.
-        view = Store()
+        view = Store(user=user)
 
 
         # Preps the store menu message and sends it along with the view.

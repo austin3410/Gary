@@ -6,6 +6,8 @@ from discord import ButtonStyle
 from discord.ui import View, button, Item, Button
 import asyncio
 from .bbtcg import BBTCG
+from random import randint, choice
+import math
 
 class BBTCG_Games(commands.Cog):
     # Inits the bot instance so we can do things like send messages and get other Discord information.
@@ -19,7 +21,7 @@ class BBTCG_Games(commands.Cog):
     def before_invoke_channel_check(ctx):
         if str(ctx.channel.type) == "private":
             return False
-        if ctx.command.name == "tictactoe" or ctx.command.name == "cointoss":
+        if ctx.command.name == "tictactoe" or ctx.command.name == "cointoss" or ctx.command.name == "snailrace":
             return ctx.channel.name == "games"
     
     # This handles inviting someone to play a game.
@@ -106,92 +108,146 @@ class BBTCG_Games(commands.Cog):
         
         # If everything is good, the game can continue.
         return {"result": True}
+    
+    # This View offers a way for everyone to join a public game via a button.
+    # Doesn't send the initial message but provides the Join button and keeps track of the list.
+    # Use joingame.stop() to prevent late entries.
+    class JoinGame(discord.ui.View):
 
-    # COIN TOSS - Slash command
-    """@slash_command(name="cointoss", description="Play a Coin Toss game for greater and greater rewards!", guild_ids=[389818215871676418])
+        def __init__(self, host):
+            super().__init__()
+            self.players = [host]
+
+        @discord.ui.button(label="Join Game!", style=discord.ButtonStyle.green)
+        async def join_race(self, button, interaction):
+
+            if interaction.user in self.players:
+                return await interaction.response.send_message("You've already joined the game!", ephemeral=True)
+
+            self.players.append(interaction.user)
+            og_msg = interaction.message
+            new_msg = str(og_msg.content) + "\n" + f"<@{interaction.user.id}>"
+            await og_msg.edit(content=new_msg)
+            return await interaction.response.send_message("You've joined the game!", ephemeral=True)
+
+    # SNAIL RACE - Slash command
+    @slash_command(name="snailrace", description="Race snails for a chance to win a BBTCG card or BBTCG cash!", guild_ids=[389818215871676418])
     @check(before_invoke_channel_check)
-    async def cointoss(self, ctx):
-        
-        player = ctx.author
-        player_user = self.load_user(ctx.author.id)
+    async def snailrace(self, ctx, delay: Option(int, "How many seconds before the game starts?")):
 
-        if player_user["money"] < 10:
-            return await ctx.respond("You don't have enough money to play Coin Toss. The buy-in is $10.")
+        # This allows the player to set a delay between 10 and 60 seconds to let people join.
+        if delay < 10 or delay > 60:
+            return await ctx.respond("Delays can be between 10 and 60 seconds!", ephemeral=True)
+        
+        # This is responsible for the join game button.
+        joingame = self.JoinGame(ctx.author)
+        await ctx.respond(f"A Snail Race will start in **{delay}** seconds! Players:\n<@{ctx.author.id}>", view=joingame)
+
+        # Waits until the delay is finished, then stops listening to the JoinGame button.
+        await asyncio.sleep(delay)
+        joingame.stop()
+    
+        # This is the player class which houses player specific details.
+        class Player:
+            
+            def __init__(self, player):
+                self.user = player
+                self.progress = 0
+        
+        # This is the actual SnailRace Class which houses all of the game logic.
+        class SnailRace:
+
+            def __init__(self, players):
+                
+                # On start, takes all of the users that want to play and creates a Player class for them.
+                self.players = []
+                for p in players:
+                    self.players.append(Player(p))
+                self.winner = None
+                self.last_status_update = None
+            
+            # This is responsible for updating the scoreboard during a race.
+            async def show_status(self):
+                
+                status_msg = "The race has begun!\n"
+
+                for player in self.players:
+                    pip = math.floor(player.progress / 10)
+                    pip_remain = 20 - pip
+                    pip = "+" * pip
+                    pip_remain = "=" * pip_remain
+
+                    status_msg += f"🏁{pip_remain}🐌{pip}: - {player.user.name}\n"
+
+                self.last_status_update = status_msg
+                await joingame.message.edit(content=status_msg, view=None)
+            
+            # This starts a new "round" and handles the random progression of each player.
+            # Also starts the check_winner process.
+            def take_turn(self):
+
+                for p in self.players:
+                    p.progress += randint(1, 30)
+
+                r = self.check_winner()
+
+            # This filters all the players to see if any of them have reached the winning threshold. Currently set to 200.
+            def check_winner(self):
+                
+                # If the winning threshold should be changed, also remember to divide the new threshold by 10 and put it above in the show_status process.
+                find_winners = list(filter(lambda player: player.progress >= 200, self.players))
+                
+                # If a player passes the winning threshold, add them to the winners list.
+                if len(list(find_winners)) > 0:
+                    self.winner = []
+                    for p in find_winners:
+                        self.winner.append(p)
+        
+        # Initializes the SnailRace class and passes the users who want to play.
+        sr = SnailRace(joingame.players)
+
+        # This is the actual game loop that will run until sr.winner is no longer empty.
+        while sr.winner == None:
+            sr.take_turn()
+            await sr.show_status()
+            await asyncio.sleep(1.5)
+        
+        # Everything below handles end of game stuff. The winning message, reward payouts, etc.
+        # The first IF block handles the winning message.
+        if len(sr.winner) > 1:
+            og_msg = sr.last_status_update
+            win_msg = og_msg + f"The Game is Over! It's a tie between:\n"
+            for winner in sr.winner:
+                win_msg += f"{winner.user.name}\n"
+            await joingame.message.edit(content=win_msg, view=None)
+            winnings = 10
+        
         else:
-            await ctx.delete()
+            og_msg = sr.last_status_update
+            win_msg = og_msg + f"\nThe Game is Over! {sr.winner[0].user.name} is the winner!"
+            await joingame.message.edit(content=win_msg, view=None)
+            winnings = 15
 
-        # This creates the thread channel the game takes place in.
-        game_thread = await ctx.channel.create_thread(name=f"{player.name}: COIN TOSS",  type=discord.ChannelType.public_thread, auto_archive_duration=60)
-        
-        class ct(discord.ui.View):
-            def __init__(self, *items: Item, timeout: float = 120, player: discord.User, game_thread):
-                super().__init__(*items, timeout=timeout)
-                self.player = player
-                self.game_thread = game_thread
-                self.round = 1
-                self.multiplier = 3
-                self.buyin = 10
-                self.value = None
-                self.inter = None
-
-            @button(label="Flip", style=ButtonStyle.danger, disabled=False, custom_id="flip", row=0)
-            async def flip(self, button: discord.ui.Button, interaction: discord.Interaction):
-                await self.flip_callback(button, interaction)
-            
-            @button(label="Stay", style=ButtonStyle.success, disabled=False, custom_id="stay", row=0)
-            async def stay(self, button: discord.ui.Button, interaction: discord.Interaction):
-                pass
-            
-            async def flip_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
-                flip = random.choice([":arrow_up:", ":arrow_down:"])
-                if flip == ":arrow_up:":
-                    self.buyin  *= self.multiplier
-                    self.multiplier += 1
-                    self.round += 1
-                    await interaction.response.edit_message(content=f"Round {self.round}\nCurrent pot: **${self.buyin}**", view=self)
-                else:
-                    self.clear_items()
-                    await interaction.response.edit_message(content=f"{flip} Sorry, you lose! You lasted {self.round} rounds!", view=self)
-                    self.buyin = 0
-                    self.value = "LOST"
-                    self.inter = interaction
-                    self.stop()
-            async def stay_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
-                self.value = "STAY"
-                self.stop()
-        
-        class ctplayagain(discord.ui.View):
-            def __init__(self, *items: Item, timeout: float = 20, game_thread, inter: discord.Interaction):
-                super().__init__(*items, timeout=timeout)
-                self.game_thread = game_thread
-                self.inter = inter
-                self.value = None
-            
-            async def on_timeout(self):
-                self.value = "PASS"
-            
-            @button(label="Play Again?", style=ButtonStyle.blurple, custom_id="play_again")
-            async def play_again(self, button:discord.ui.Button, interaction: discord.Interaction):
-                self.value = "PLAY AGAIN"
-                self.clear_items()
-                await self.inter.delete_original_message()
-                await interaction.response.edit_message(content="New game starting...", view=self)
-                self.stop()
-        while True:
-            await game_thread.purge(limit=1)
-            cointoss = ct(player=player, game_thread=game_thread)
-            await game_thread.send(content="Round 1", view=cointoss)
-            timeout = await cointoss.wait()
-            
-            if cointoss.value == "LOST":
-                ctpa = ctplayagain(game_thread=game_thread, inter=cointoss.inter)
-                await game_thread.send(view=ctpa)
-                timeout = await ctpa.wait()
-                print(timeout)
-                if timeout == True:
-                    break
-                elif ctpa.value == "PLAY AGAIN":
-                    pass"""
+        # This For loop handles reward payouts.
+        for winner in sr.winner:
+            bbtcg_user = self.BBTools.load_user(self, uid=winner.user.id)
+            # The prize roll is a roll to see if the user wins a card instead of BBTCG cash.
+            prize_roll = randint(1, 50)
+            if prize_roll == 25:
+                cards = self.BBTools.load_cards(self)
+                prize_card = choice(cards)
+                bbtcg_user["inventory"].append(prize_card)
+                cards.remove(prize_card)
+                saved_cards = self.BBTools.save_cards(self, cards=cards)
+                saved_user = self.BBTools.save_user(self, user=bbtcg_user)
+                if saved_cards == True and saved_user == True:
+                    card_embed = self.BBTools.generate_card(self, card=prize_card)
+                    await ctx.channel.send(f"Congrats <@{winner.user.id}>, you won a card!", embed=card_embed)
+            else:
+                bbtcg_user["money"] += winnings
+                saved_user = self.BBTools.save_user(self, bbtcg_user)
+                if saved_user == True:
+                    await ctx.channel.send(f"Congrats <@{winner.user.id}>, you won ${winnings}!")
 
     # TIC TAC TOE - Slash command
     @slash_command(name="tictactoe", description="Play a game of TicTacToe against other players for BBTCG Cash!")
