@@ -469,7 +469,7 @@ class BBTCG(commands.Cog):
         return await message.respond("Market renewed.", ephemeral=True, delete_after=3)
     
     # ADJUST USER CASH Command
-    @user_command(name="Adjust Cash", help="Adjusts a user BBTCG cash.", guild_ids=[389818215871676418])
+    @user_command(name="Adjust Cash", help="Adjusts a user BBTCG cash.")
     @default_permissions(administrator=True)
     async def bbtcg_adjust(self, ctx, member: Option(discord.Member, description="Target user ID.")):
 

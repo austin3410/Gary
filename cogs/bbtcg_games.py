@@ -131,7 +131,7 @@ class BBTCG_Games(commands.Cog):
             return await interaction.response.send_message("You've joined the game!", ephemeral=True)
 
     # SNAIL RACE - Slash command
-    @slash_command(name="snailrace", description="Race snails for a chance to win a BBTCG card or BBTCG cash!", guild_ids=[389818215871676418])
+    @slash_command(name="snailrace", description="Race snails for a chance to win a BBTCG card or BBTCG cash!")
     @check(before_invoke_channel_check)
     async def snailrace(self, ctx, delay: Option(int, "How many seconds before the game starts?")):
 
