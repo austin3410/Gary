@@ -1,3 +1,4 @@
+from unittest.mock import NonCallableMagicMock
 import discord
 from discord.commands import slash_command, Option  # Importing the decorator that makes slash commands.
 from discord.ext import commands
@@ -204,6 +205,33 @@ class Music(commands.Cog):
             await self.play_song(song)
             #print("[WaveLink] Song played/added to queue.")
             return await ctx.respond(f"Adding `{song.title}` to the queue.", delete_after=5)
+    
+    async def bot_play(self, ctx, search):
+
+        mr_channel = await self.get_mr_channel()
+
+        if mr_channel == False:
+            return ctx.author.send("I couldn't find the music channel, so I couldn't play any music...")
+        
+        song = await wavelink.YouTubeTrack.search(query=search, return_first=True)
+
+        vc = await self.connect(ctx)
+        if vc == None:
+            return
+        if vc.channel != ctx.author.voice.channel:
+            return await mr_channel.send("You must be in the same channel as Gary!", ephemeral=True)
+        else:
+            await self.play_song(song)
+            #print("[WaveLink] Song played/added to queue.")
+            return await mr_channel.send(f"Adding `{song.title}` to the queue.", delete_after=5)
+    
+    async def get_mr_channel(self):
+        for channel in self.bot.get_all_channels():
+            #print(channel.name)
+            if channel.name == "music_requests":
+                return channel
+        
+        return False
     
 # Standard bot setup.
 def setup(bot):
