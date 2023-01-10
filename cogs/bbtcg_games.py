@@ -133,7 +133,7 @@ class BBTCG_Games(commands.Cog):
     # SNAIL RACE - Slash command
     @slash_command(name="snailrace", description="Race snails for a chance to win a BBTCG card or BBTCG cash!")
     @check(before_invoke_channel_check)
-    async def snailrace(self, ctx, delay: Option(int, "How many seconds before the game starts?")):
+    async def snailrace(self, ctx, delay: Option(int, "How many seconds before the game starts? (10-60)")):
 
         # This allows the player to set a delay between 10 and 60 seconds to let people join.
         if delay < 10 or delay > 60:
@@ -146,6 +146,10 @@ class BBTCG_Games(commands.Cog):
         # Waits until the delay is finished, then stops listening to the JoinGame button.
         await asyncio.sleep(delay)
         joingame.stop()
+
+        # Makes sure that there are at least 2 players.
+        if len(joingame.players) <= 1:
+            return await joingame.message.edit(content="No one else joined the race so it's been canceled!", delete_after=10, view=None)
     
         # This is the player class which houses player specific details.
         class Player:
