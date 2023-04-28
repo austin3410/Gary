@@ -5,3 +5,4 @@ config
 google-search-results
 wavelink
 openai
+matplotlib

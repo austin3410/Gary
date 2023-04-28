@@ -14,6 +14,7 @@ import random
 import os
 import json
 from datetime import datetime, timedelta
+import matplotlib.pyplot as plt
 
 from files.BBTCG.check_achievements import CheckAchievements
 
@@ -32,9 +33,72 @@ class BBTCG(commands.Cog):
     async def on_ready(self):
         while True:
             await self.auto_market()
+            try:
+                await self.record_history()
+            except:
+                pass
             # This sets the timer between refreshes. 3600 - 1 hour.
-            await asyncio.sleep(3600)
+            await asyncio.sleep(3660)
     
+    async def record_history(self):
+        history = self.load_history()
+        
+        # First mark the time.
+        current_time = datetime.now().strftime("%d-%m-%y %I%p")
+
+        # Next we need to load in all the users and check the card value average for all players.
+        users = []
+        all_users_card_total = 0
+        for user_file in os.listdir(self.BBTCGdir + "users//"):
+            if user_file != "0.pickle":
+                user = self.load_user(str(user_file).replace(".pickle", ""))
+                users.append(user)
+        
+        for user in users:
+            total_cards_value = 0
+            for c in user["inventory"]:
+                total_cards_value += c["value"]
+            all_users_card_total += total_cards_value
+        
+        # Calculates average and compares it against the historical average.
+        all_user_card_average = int(all_users_card_total / len(users))
+        if history["current_average"] == all_user_card_average:
+            pass
+            #print("Nothing has changed, history will not be written.")
+        
+        # Now that we know things are different, start to add to the history file.
+        else:
+            #print("Stats have changed, history will be written!")
+            for user in users:
+                discord_user = await self.bot.fetch_user(user["id"])
+                
+                # Calculates total card value to add to plot points.
+                total_cards_value = 0
+                for c in user["inventory"]:
+                    total_cards_value += c["value"]
+
+                # Checks if the current user is not in any of the user dictionaries.
+                if not any(d["username"] == discord_user.name for d in history["users"]):
+                    user_plots = []
+                    for i in range(len(history["times"])):
+                        user_plots.append(0)
+                    user_plots.append(total_cards_value)
+                    history["users"].append({"username": discord_user.name, "plots": user_plots})
+                
+                # If they are already in a dictionary.
+                else:
+                    for u in history["users"]:
+                        if u["username"] == discord_user.name:
+                            u["plots"].append(total_cards_value)
+            
+            # Appends the current time to the times list.
+            history["times"].append(current_time)
+
+            #Last, updates the historical average with the new average.
+            history["current_average"] = all_user_card_average
+
+        self.save_history(history)
+        
     async def auto_market(self):
         try:
             # Loads the market and the available cards
@@ -189,6 +253,26 @@ class BBTCG(commands.Cog):
             pickle.dump(market, file)
             return True
     
+    # This loads the history file, if it exists.
+    def load_history(self):
+        try:
+            with open(self.BBTCGdir + f"cards//history.pickle", "rb") as file:
+                history = pickle.load(file)
+                return history
+        except:
+            if not os.path.exists(self.BBTCGdir + "cards//"):
+                os.makedirs(self.BBTCGdir + "cards//")
+            history = {"current_average": 0, "times": [], "users": []}
+            with open(self.BBTCGdir + f"cards//history.pickle", "wb") as file:
+                pickle.dump(history, file)
+            return history
+    
+    # This function saves the history file with a new one.
+    def save_history(self, history):
+        with open(self.BBTCGdir + f"cards//history.pickle", "wb") as file:
+            pickle.dump(history, file)
+            return True
+    
     # This function loads the created_roles file or creates a new one.
     def load_roles(self):
         try:
@@ -291,6 +375,10 @@ class BBTCG(commands.Cog):
                 if third_place != None:
                     msg = msg + f"<@{third_place['id']}>, they had **${third_place['card_value']}** worth of cards!"
                 await bbtcg_channel.send(msg)
+
+                await self.record_history()
+                graph = await self.generate_history_graph()
+                await bbtcg_channel.send(file=graph)
 
                 # Deletes all of the generated files for a fresh start.
                 cards_files = os.listdir("files//BBTCG//cards//")
@@ -419,7 +507,7 @@ class BBTCG(commands.Cog):
                 return False
             if ctx.command.name == "slots":
                 return ctx.channel.name == "games"
-            elif ctx.command.name == "store" or ctx.command.name == "draw":
+            elif ctx.command.name == "store" or ctx.command.name == "draw" or ctx.command.name == "history":
                 return ctx.channel.name == "bbtcg"
     
     # This lets us dynamically create an appropriate cooldown for slots.
@@ -437,6 +525,35 @@ class BBTCG(commands.Cog):
 
         return Cooldown(1, cd_time)
 
+    async def generate_history_graph(self):
+        history = self.load_history()
+
+        x = history["times"]
+        y = []
+        labels = []
+
+        for user in history["users"]:
+            labels.append(user["username"])
+            y.append(user["plots"])
+        
+        z = 0
+        for l in y:
+            plt.plot(x, l, label=labels[z])
+            z += 1
+        
+        plt.legend(loc="upper left")
+        plt.title("BBTCG Current Match Timeline")
+        plt.xticks(fontsize=10, rotation=45)
+        plt.xlabel("Time")
+        plt.ylabel("Card Value in $")
+        plt.tight_layout(pad=1.3)
+        plt.savefig(self.BBTCGdir + "graph.png")
+
+        with open(self.BBTCGdir + "graph.png", "rb") as file:
+            pic = discord.File(file)
+        
+        return pic
+
 
 ################################################################################################
 # BELOW ARE ALL OF THE ACTUAL DISCORD COMMANDS                                                 #
@@ -449,6 +566,13 @@ class BBTCG(commands.Cog):
     async def bbtcg_draw(self, message):
         await self.draw_card(message)
     
+    # HISTORY Command
+    @slash_command(name="history", description="Shows a brief history of the current match.", help="Shows a brief history of the current match.")
+    @check(before_invoke_channel_check)
+    async def bbtcg_history(self, ctx):
+        pic = await self.generate_history_graph()
+        await ctx.respond(file=pic)
+
     # PRINT USER Command
     @user_command(name="BBTCG Print", help="Prints out a users BBTCG profile.")
     @default_permissions(administrator=True)
@@ -763,7 +887,7 @@ class BBTCG(commands.Cog):
         return await ctx.respond(f"I will create your market post for Card no. **{card_to_sell['num']}** in **5 minutes**!")
     
     @market.command(description="Buys a card on the BBTCG market.")
-    @cooldown(1, 180, commands.BucketType.user)
+    @cooldown(1, 15, commands.BucketType.user)
     async def buy(self, ctx, cardno: Option(int, description="Card no you want to buy.")):
         cc = await self.channel_check(ctx, "bbtcg")
         if cc == False:
