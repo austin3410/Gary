@@ -45,6 +45,7 @@ class BBTCG(commands.Cog):
         
         # First mark the time.
         current_time = datetime.now().strftime("%d-%m-%y %I%p")
+        #print(current_time)
 
         # Next we need to load in all the users and check the card value average for all players.
         users = []
@@ -427,6 +428,7 @@ class BBTCG(commands.Cog):
         await ctx.respond(f"<@{ctx.user.id}> congrats on the draw!", embed=embed)
 
         await self.check_for_achievements(user, ctx)
+        await self.record_history()
 
         return await self.end_game()
     
@@ -527,8 +529,19 @@ class BBTCG(commands.Cog):
 
     async def generate_history_graph(self):
         history = self.load_history()
+        #print(history)
+
+        # This checks to make sure we can actually generate a useful history graph.
+        if len(history["times"]) <= 1:
+            return "Not enough time has passed to generate a history graph."
+        elif len(history["users"]) <= 1:
+            return "There aren't enough players to generate a history graph."
+        elif history["current_average"] < 1:
+            return "The current average for all players is too low to record on a graph."
 
         x = history["times"]
+        x[0] = "Start " + x[0]
+        #x[-1] = "Now"
         y = []
         labels = []
 
@@ -539,6 +552,8 @@ class BBTCG(commands.Cog):
         z = 0
         for l in y:
             plt.plot(x, l, label=labels[z])
+            plt.annotate(f"${int(l[-1])}", xy=(1, l[-1]), xytext=(8, 0), xycoords=("axes fraction", "data"), textcoords="offset points")
+            #plt.axhline(y=l[-1], color="y", linestyle="-.")
             z += 1
         
         plt.legend(loc="upper left")
@@ -547,10 +562,14 @@ class BBTCG(commands.Cog):
         plt.xlabel("Time")
         plt.ylabel("Card Value in $")
         plt.tight_layout(pad=1.3)
+        plt.grid(visible=True)
         plt.savefig(self.BBTCGdir + "graph.png")
 
         with open(self.BBTCGdir + "graph.png", "rb") as file:
             pic = discord.File(file)
+        
+        # If we don't close the figure, each player will be added again.
+        plt.close()
         
         return pic
 
@@ -570,8 +589,11 @@ class BBTCG(commands.Cog):
     @slash_command(name="history", description="Shows a brief history of the current match.", help="Shows a brief history of the current match.")
     @check(before_invoke_channel_check)
     async def bbtcg_history(self, ctx):
-        pic = await self.generate_history_graph()
-        await ctx.respond(file=pic)
+        graph = await self.generate_history_graph()
+        if isinstance(graph, str):
+            await ctx.respond(graph)
+        else:
+            await ctx.respond(file=graph)
 
     # PRINT USER Command
     @user_command(name="BBTCG Print", help="Prints out a users BBTCG profile.")
@@ -940,6 +962,7 @@ class BBTCG(commands.Cog):
         await self.check_for_achievements(buyer, ctx)
         if seller["id"] != 0:
             await self.check_for_achievements(seller)
+        await self.record_history()
         
         # Saves the new smaller market and new richer seller.
         saved_market = self.save_market(market)
@@ -1022,6 +1045,7 @@ class BBTCG(commands.Cog):
             return print("Something went wrong with scrapping a card.")
         else:
             await self.check_for_achievements(user, ctx)
+            await self.record_history()
             return await ctx.respond(f"<@{ctx.author.id}>, I've scrapped your card and awarded you ${scrap_price}!")
     
     # UNEQUIP command - Removes a user from a card role.
@@ -1610,6 +1634,7 @@ class BBTCG(commands.Cog):
 
             # Checks for earned achievements.
             await self.check_for_achievements(user, ctx)
+            await self.record_history()
 
             if saved_user != True:
                 print("Something went wrong. Was unable to save user in store - draw a card.")
@@ -1682,6 +1707,7 @@ class BBTCG(commands.Cog):
                 print(target_card)
             else:
                 await self.check_for_achievements(target_user)
+                await self.record_history()
 
             # Adds the card to the users inventory.
             user["inventory"].append(target_card)
@@ -1692,6 +1718,7 @@ class BBTCG(commands.Cog):
                 print(target_card)
             else:
                 await self.check_for_achievements(user, ctx)
+                await self.record_history()
             
             # Generates an embed to let the server know that someone stole a card!
             embed = self.generate_card(target_card)
@@ -1754,6 +1781,7 @@ class BBTCG(commands.Cog):
                 print(target_card)
             else:
                 await self.check_for_achievements(target_user)
+                await self.record_history()
 
             # Adds the card to the users inventory.
             user["inventory"].append(target_card)
@@ -1764,6 +1792,7 @@ class BBTCG(commands.Cog):
                 print(target_card)
             else:
                 await self.check_for_achievements(user, ctx)
+                await self.record_history()
         
             # Generates an embed to let the server know that someone stole a card!
             embed = self.generate_card(target_card)
