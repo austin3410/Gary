@@ -44,7 +44,7 @@ class BBTCG(commands.Cog):
         history = self.load_history()
         
         # First mark the time.
-        current_time = datetime.now().strftime("%d-%m-%y %I%p")
+        current_time = datetime.now().strftime("%d-%m-%y %I:%M:%S %p")
         #print(current_time)
 
         # Next we need to load in all the users and check the card value average for all players.
@@ -540,7 +540,7 @@ class BBTCG(commands.Cog):
             return "The current average for all players is too low to record on a graph."
 
         x = history["times"]
-        x[0] = "Start " + x[0]
+        x[0] = "Start - " + x[0]
         #x[-1] = "Now"
         y = []
         labels = []
@@ -558,11 +558,12 @@ class BBTCG(commands.Cog):
         
         plt.legend(loc="upper left")
         plt.title("BBTCG Current Match Timeline")
-        plt.xticks(fontsize=10, rotation=45)
+        plt.xticks(ticks=[x[0], (x[int(len(x)/2)]), "Now"])
         plt.xlabel("Time")
         plt.ylabel("Card Value in $")
-        plt.tight_layout(pad=1.3)
+        plt.tight_layout()
         plt.grid(visible=True)
+        plt.style.use("seaborn-darkgrid")
         plt.savefig(self.BBTCGdir + "graph.png")
 
         with open(self.BBTCGdir + "graph.png", "rb") as file:
