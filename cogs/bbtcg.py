@@ -13,10 +13,13 @@ import pickle
 import random
 import os
 import json
+import math
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
+from configparser import ConfigParser
 
 from files.BBTCG.check_achievements import CheckAchievements
+from .bbtcg_settings import BBTCG_Settings as BBTCG_Settings
 
 class BBTCG(commands.Cog):
 
@@ -25,7 +28,12 @@ class BBTCG(commands.Cog):
         self.bot = client
         self.BBTCGdir = "files//BBTCG//"
         self._buckets = [commands.BucketType.user]
-
+        
+        # Loads the settings Python file which parses and handles the actual settings file.
+        self.BBTCG_Settings = BBTCG_Settings(self.bot)
+        
+        # Asks the settings Python file to read and return the actual settings file.
+        self.settings = self.BBTCG_Settings.read_settings()
     
     # AUTO MARKET Reset
     # This refreshes the auto-generated market every hour.
@@ -38,7 +46,7 @@ class BBTCG(commands.Cog):
             except:
                 pass
             # This sets the timer between refreshes. 3600 - 1 hour.
-            await asyncio.sleep(3660)
+            await asyncio.sleep(int(self.settings["auto_market"]["timer"]))
     
     async def record_history(self):
         history = self.load_history()
@@ -120,7 +128,7 @@ class BBTCG(commands.Cog):
                     cards.append(c)
             # Randomly picks between 4 and 8 new cards to add to the market.
             drop = []
-            amount_of_cards = random.randrange(4, 8)
+            amount_of_cards = random.randrange(int(self.settings["auto_market"]["cards_min"]), int(self.settings["auto_market"]["cards_max"]))
             for i in range(0, amount_of_cards):
                 try:
                     card = random.choice(cards)
@@ -135,14 +143,12 @@ class BBTCG(commands.Cog):
                 c["seller"] = "someone"
                 c["seller_id"] = 0
                 c["selling_start_time"] = datetime.now()
-                firesale = random.randint(0, 145)
-                if firesale == 144:
+                firesale = random.randint(0, int(self.settings["auto_market"]["firesale_chance"]))
+                if firesale == 25:
                     print(f"Fire sale on {c['name']} !!!")
-                    c["selling_price"] = round(int(c["value"]) * .15)
-                elif firesale > 100:
-                    c["selling_price"] = round(int(c["value"]) * random.uniform(.9, 1.30))
+                    c["selling_price"] = round(int(c["value"]) * float(self.settings["auto_market"]["firesale_mult"]))
                 else:
-                    c["selling_price"] = round(int(c["value"]) * random.uniform(1.4, 1.75))
+                    c["selling_price"] = round(int(c["value"]) * random.uniform(float(self.settings["auto_market"]["cardprice_min_mult"]), float(self.settings["auto_market"]["cardprice_max_mult"])))
                 market.append(c)
             saved_market = self.save_market(market)
             saved_cards = self.save_cards(cards)
@@ -523,7 +529,7 @@ class BBTCG(commands.Cog):
             spins = message.unselected_options[0].default
         
         # Calcuates cooldown time in seconds.
-        cd_time = spins * 60
+        cd_time = spins * 45
 
         return Cooldown(1, cd_time)
 
@@ -541,7 +547,6 @@ class BBTCG(commands.Cog):
 
         x = history["times"]
         x[0] = "Start - " + x[0]
-        #x[-1] = "Now"
         y = []
         labels = []
 
@@ -878,8 +883,8 @@ class BBTCG(commands.Cog):
             return
         
         # Sets a maximum asking price so that users can't prolong a game indefinitely with an insane asking price.
-        if price > 300:
-            return await ctx.respond("The maximum asking price for any card is $300.", ephemeral=True)
+        if price > int(self.settings["market"]["sell_max_price"]):
+            return await ctx.respond(f"The maximum asking price for any card is ${self.settings['market']['sell_max_price']}.", ephemeral=True)
         user = self.load_user(ctx.author.id)
         card_to_sell = next((item for item in user["inventory"] if int(item["num"]) == int(cardno)), None)
         
@@ -894,7 +899,7 @@ class BBTCG(commands.Cog):
         card_to_sell["seller"] = ctx.author.name
         card_to_sell["seller_id"] = ctx.author.id
         card_to_sell["selling_price"] = str(price).replace("$", "")
-        card_to_sell["selling_start_time"] = datetime.now() + timedelta(minutes=5)
+        card_to_sell["selling_start_time"] = datetime.now() + timedelta(minutes=int(self.settings["market"]["sell_timedelta_minutes"]))
         # Loads the market and adds the new listing to the market.
         market = self.load_market()
         market.append(card_to_sell)
@@ -907,10 +912,10 @@ class BBTCG(commands.Cog):
         if saved_market != True:
             return print("Something went wrong in MARKET POST market not saved!")
         
-        return await ctx.respond(f"I will create your market post for Card no. **{card_to_sell['num']}** in **5 minutes**!")
+        return await ctx.respond(f"I've created your market post for Card no. **{card_to_sell['num']}**!")
     
     @market.command(description="Buys a card on the BBTCG market.")
-    @cooldown(1, 15, commands.BucketType.user)
+    @cooldown(1, 0, commands.BucketType.user)
     async def buy(self, ctx, cardno: Option(int, description="Card no you want to buy.")):
         cc = await self.channel_check(ctx, "bbtcg")
         if cc == False:
@@ -974,7 +979,7 @@ class BBTCG(commands.Cog):
             self.buy.reset_cooldown(ctx)
             return print("Something went wrong with BUY!")
         
-        await ctx.respond(f"Successfully purchased Card no. {card_to_buy['num']} from the market!")
+        await ctx.respond(f"Successfully purchased Card no. **{card_to_buy['num']}** from the market!")
 
         return await self.end_game()
     
@@ -1029,7 +1034,7 @@ class BBTCG(commands.Cog):
         await self.unequip(ctx=ctx, cardno=cardno, internal=True)
         
         # Awards the cash value of the card to the user and adjusts stats.
-        scrap_price = round(int(card_to_scrap["value"]) * 0.75)
+        scrap_price = round(int(card_to_scrap["value"]) * float(self.settings["market"]["scrap_price_mult"]))
         user["inventory"].remove(card_to_scrap)
         user["money"] = user["money"] + scrap_price
         user["market_stats"]["cards_scrapped"] = user["market_stats"]["cards_scrapped"] + 1
@@ -1162,9 +1167,9 @@ class BBTCG(commands.Cog):
             user["slots_stats"]["time_since_last_played"] = 0
             last_played = user["slots_stats"]["time_since_last_played"]
             
-        if last_played == 0 or last_played < datetime.now() - timedelta(days=1):
+        if last_played == 0 or last_played < datetime.now() - timedelta(days=int(self.settings["slots"]["restbonus_timedelta_days"])):
             rest_bonus = True
-            user["money"] = user["money"] + 200
+            user["money"] = user["money"] + int(self.settings["slots"]["restbonus_amount"])
         else:
             rest_bonus = False
 
@@ -1179,10 +1184,10 @@ class BBTCG(commands.Cog):
         except:
             pass
 
-        buy_in = 5 * spins
+        buy_in = int(self.settings["slots"]["buyin_perspin_amount"]) * spins
         thread = await message.channel.create_thread(name=f"{message.author.name}'s Slots Match", type=discord.ChannelType.public_thread)
         if rest_bonus == True:
-            await thread.send(f":tada: You just got $200 in rest money! :tada:")
+            await thread.send(f":tada: You just got ${self.settings['slots']['restbonus_amount']} in rest money! :tada:")
         # Loads the user and makes sure they have enough money to play.
         if user["money"] < buy_in:
             self.bot.get_application_command("slots").reset_cooldown(message)
@@ -1235,25 +1240,30 @@ class BBTCG(commands.Cog):
                         roll_list.append(roll)
             if roll1 == roll2 == roll3:
                 if roll1 in [":sponge:", ":snail:", ":octopus:", ":crab:"]:
-                    # 50 times payout!
-                    earnings += 250
-                    await thread.send(f"{final_msg}\nYou just nailed a 50x payout of **$250** by getting a three of a kind with SpongeBob characters! :moneybag:")
+                    # Jackpot payout!
+                    earned = (int(self.settings["slots"]["buyin_perspin_amount"]) * int(self.settings["slots"]["jackpot_mult"]))
+                    earnings += earned
+                    await thread.send(f"{final_msg}\nYou just nailed a {int(self.settings['slots']['jackpot_mult'])}x **jackpot** of **${earned}** by getting a three of a kind with SpongeBob characters! :moneybag:")
                 else:
                     # 25 times payout!
-                    earnings += 125
-                    await thread.send(f"{final_msg}\nYou just nabbed a 25x payout of **$125** by getting a three of a kind! :dollar:")
+                    earned = (int(self.settings["slots"]["buyin_perspin_amount"]) * int(self.settings["slots"]["second_highest_mult"]))
+                    earnings += earned
+                    await thread.send(f"{final_msg}\nYou just nabbed a {int(self.settings['slots']['second_highest_mult'])}x payout of **${earned}** by getting a three of a kind! :dollar:")
             elif len(roll_list) == 3:
                 # 10 times payout!
-                earnings += 50
-                await thread.send(f"{final_msg}\nYou just scored an 10x payout of **$50** by getting a trio of SpongeBob characters! :coin:")
+                earned = (int(self.settings["slots"]["buyin_perspin_amount"]) * int(self.settings["slots"]["third_highest_mult"]))
+                earnings += earned
+                await thread.send(f"{final_msg}\nYou just scored a {int(self.settings['slots']['third_highest_mult'])}x payout of **${earned}** by getting a trio of SpongeBob characters! :coin:")
             elif roll1 == roll2 or roll2 == roll3:
                 # 4 times payout!
-                earnings += 20
-                await thread.send(f"{final_msg}\nYou just grabbed a 4x payout of **$20** by getting two in a row!")
+                earned = (int(self.settings["slots"]["buyin_perspin_amount"]) * int(self.settings["slots"]["fourth_highest_mult"]))
+                earnings += earned
+                await thread.send(f"{final_msg}\nYou just grabbed a {int(self.settings['slots']['fourth_highest_mult'])}x payout of **${earned}** by getting two in a row!")
             elif ":sponge:" in [roll1, roll2, roll3]:
                 # 0.4 times payout.
-                earnings += 2
-                await thread.send(f"{final_msg}\nYou got a sponge and **$2** of your buy-in back.")
+                earned = math.floor((int(self.settings["slots"]["buyin_perspin_amount"]) * float(self.settings["slots"]["sponge_mult"])))
+                earnings += earned
+                await thread.send(f"{final_msg}\nYou got a sponge and **${earned}** of your buy-in back.")
             else:
                 await thread.send(f"{final_msg}\nYou unfortunately didn't get anything, you should try again.")
             
@@ -1445,7 +1455,7 @@ class BBTCG(commands.Cog):
      # STORE command - Opens a store menu to purchase things.
     @slash_command(name="store", description="Opens the BBTCG store. Use in #bbtcg")
     @check(before_invoke_channel_check)
-    @cooldown(5, 3600, commands.BucketType.user)
+    @cooldown(10, 3600, commands.BucketType.user)
     async def bbtcg_store(self, ctx):
         
         def load_user():
@@ -1462,7 +1472,7 @@ class BBTCG(commands.Cog):
             for c in cards:
                 draw_card_price = draw_card_price + c["value"]
 
-            draw_card_price = round((draw_card_price // len(cards)) * 1.15)
+            draw_card_price = round((draw_card_price // len(cards)) * float(self.settings["store"]["draw_price_mult"]))
         else:
             draw_card_price = "DISABLE"
 
@@ -1489,7 +1499,7 @@ class BBTCG(commands.Cog):
         if user_card_value == 0:
             random_steal_price = "DISABLE"
         else:
-            random_steal_price = round((user_card_value // user_card_count) * 1.25)
+            random_steal_price = round((user_card_value // user_card_count) * float(self.settings["store"]["randsteal_price_mult"]))
 
         # This preps all of the variables for the store buttons.
         if draw_card_price == "DISABLE":
@@ -1531,6 +1541,7 @@ class BBTCG(commands.Cog):
         class Store(discord.ui.View):
             def __init__(self, user):
                 super().__init__()
+                #self.settings = BBTCG_Settings.read_settings(self=self)
 
                 # We need this variable to refer to the users action later.
                 self.value = None
