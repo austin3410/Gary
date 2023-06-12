@@ -115,9 +115,7 @@ class AskGary(commands.Cog):
                     presence_penalty=0.0
                 )
                 response_text = response["choices"][0]["message"]["content"]
-                print(response_text)
                 response_text = str(response_text).replace(f"{ctx.author.name}", f"<@{ctx.author.id}>")
-                print(response_text)
 
                 if play_music == True:
                     songs = []
