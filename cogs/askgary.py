@@ -26,11 +26,12 @@ class ImageViewer(discord.ui.View):
         self.img_url = img_url
     
     # Disabled for now because OpenAI's docs suck.
-    """async def modal_callback(self, interaction):
+    async def modal_callback(self, interaction):
         revision_prompt = interaction.data["components"][0]["components"][0]["value"]
         og_image_url = interaction.message.embeds[0].image.url
+        print(og_image_url)
 
-        response = openai.Image.create_edit(
+        response = openai.Image.create_variation(
           prompt=revision_prompt,
           image="https://i.imgur.com/qq80w2f.jpeg",
           n=1,
@@ -53,7 +54,7 @@ class ImageViewer(discord.ui.View):
         embed.set_image(url=f"attachment://{filename}.png")
         await interaction_thread.send(embed=embed, file=file)
 
-        self.stop()"""
+        self.stop()
 
         
 
@@ -66,7 +67,7 @@ class ImageViewer(discord.ui.View):
         return await interaction.response.send_message(f"I've DM'd you this image!\n{msg.jump_url}", ephemeral=True)
         
     # Disabled for now because OpenAI's docs suck.
-    """@discord.ui.button(label="Revise", emoji="🤩", style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="Revise", emoji="🤩", style=discord.ButtonStyle.blurple)
     async def revise_image(self, button, interaction: discord.Interaction):
 
         modal = discord.ui.Modal(title="Revise an Image...")
@@ -78,8 +79,8 @@ class ImageViewer(discord.ui.View):
 
         
 
-        #print(modal_return)
-        #print(modal.to_dict())"""
+        print(modal_return)
+        print(modal.to_dict())
 
 class AskGary(commands.Cog):
     # Inits the bot instance so we can do things like send messages and get other Discord information.
