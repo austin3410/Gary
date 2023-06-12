@@ -103,10 +103,10 @@ class AskGary(commands.Cog):
                 question = str(ctx.content).replace("<@704812476184788992>", "")
                 question = f"{ctx.author.name} asks, hey Gary," + question
                 response = openai.Completion.create(
-                    model="gpt-4",
+                    model="gpt-3.5-turbo",
                     prompt=question,
                     temperature=0.9,
-                    max_tokens=7000,
+                    max_tokens=3500,
                     top_p=1,
                     frequency_penalty=0.0,
                     presence_penalty=0.0
