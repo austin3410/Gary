@@ -27,16 +27,14 @@ class ImageViewer(discord.ui.View):
     
     # Disabled for now because OpenAI's docs suck.
     async def modal_callback(self, interaction):
-        revision_prompt = interaction.data["components"][0]["components"][0]["value"]
+        #revision_prompt = interaction.data["components"][0]["components"][0]["value"]
         og_image_url = interaction.message.embeds[0].image.url
         print(og_image_url)
 
         response = openai.Image.create_variation(
-          prompt=revision_prompt,
-          image="https://i.imgur.com/qq80w2f.jpeg",
+          image=og_image_url,
           n=1,
-          size="1024x1024",
-          mask=""
+          size="1024x1024"
         )
         image_url = response['data'][0]['url']
 
@@ -47,7 +45,8 @@ class ImageViewer(discord.ui.View):
         
         interaction_thread = await interaction.message.create_thread(name="Revised Images:")
 
-        filename = str(revision_prompt[0:12]).replace(" ", "_")
+        #filename = str(revision_prompt[0:12]).replace(" ", "_")
+        filename = "revised_photo"
         file = discord.File(data, f"{filename}.png")
         
         embed = discord.Embed(title=f"{interaction.user.name}'s Image")
