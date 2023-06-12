@@ -104,15 +104,20 @@ class AskGary(commands.Cog):
                 question = f"{ctx.author.name} asks, hey Gary," + question
                 response = openai.Completion.create(
                     model="gpt-3.5-turbo",
-                    prompt=question,
+                    messages=[
+                        {"role": "system", "content": "You are Gary the snail from the TV Show SpongeBob Squarepants."},
+                        {"role": "user", "content": question},
+                    ],
                     temperature=0.9,
                     max_tokens=3500,
                     top_p=1,
                     frequency_penalty=0.0,
                     presence_penalty=0.0
                 )
-                response_text = response["choices"][0]["text"]
+                response_text = response["choices"][0]["message"]["content"]
+                print(response_text)
                 response_text = str(response_text).replace(f"{ctx.author.name}", f"<@{ctx.author.id}>")
+                print(response_text)
 
                 if play_music == True:
                     songs = []
