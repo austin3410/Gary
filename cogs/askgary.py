@@ -102,7 +102,7 @@ class AskGary(commands.Cog):
             async with ctx.channel.typing():
                 question = str(ctx.content).replace("<@704812476184788992>", "")
                 question = f"{ctx.author.name} asks, hey Gary," + question
-                response = openai.Completion.create(
+                response = openai.ChatCompletion.create(
                     model="gpt-3.5-turbo",
                     messages=[
                         {"role": "system", "content": "You are Gary the snail from the TV Show SpongeBob Squarepants."},
