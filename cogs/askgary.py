@@ -26,16 +26,15 @@ class ImageViewer(discord.ui.View):
         self.img_url = img_url
     
     # Disabled for now because OpenAI's docs suck.
-    """async def modal_callback(self, interaction):
-        revision_prompt = interaction.data["components"][0]["components"][0]["value"]
+    async def modal_callback(self, interaction):
+        #revision_prompt = interaction.data["components"][0]["components"][0]["value"]
         og_image_url = interaction.message.embeds[0].image.url
+        print(og_image_url)
 
-        response = openai.Image.create_edit(
-          prompt=revision_prompt,
-          image="https://i.imgur.com/qq80w2f.jpeg",
+        response = openai.Image.create_variation(
+          image=og_image_url,
           n=1,
-          size="1024x1024",
-          mask=""
+          size="1024x1024"
         )
         image_url = response['data'][0]['url']
 
@@ -46,14 +45,15 @@ class ImageViewer(discord.ui.View):
         
         interaction_thread = await interaction.message.create_thread(name="Revised Images:")
 
-        filename = str(revision_prompt[0:12]).replace(" ", "_")
+        #filename = str(revision_prompt[0:12]).replace(" ", "_")
+        filename = "revised_photo"
         file = discord.File(data, f"{filename}.png")
         
         embed = discord.Embed(title=f"{interaction.user.name}'s Image")
         embed.set_image(url=f"attachment://{filename}.png")
         await interaction_thread.send(embed=embed, file=file)
 
-        self.stop()"""
+        self.stop()
 
         
 
@@ -66,7 +66,7 @@ class ImageViewer(discord.ui.View):
         return await interaction.response.send_message(f"I've DM'd you this image!\n{msg.jump_url}", ephemeral=True)
         
     # Disabled for now because OpenAI's docs suck.
-    """@discord.ui.button(label="Revise", emoji="🤩", style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="Revise", emoji="🤩", style=discord.ButtonStyle.blurple)
     async def revise_image(self, button, interaction: discord.Interaction):
 
         modal = discord.ui.Modal(title="Revise an Image...")
@@ -78,8 +78,8 @@ class ImageViewer(discord.ui.View):
 
         
 
-        #print(modal_return)
-        #print(modal.to_dict())"""
+        print(modal_return)
+        print(modal.to_dict())
 
 class AskGary(commands.Cog):
     # Inits the bot instance so we can do things like send messages and get other Discord information.
@@ -102,16 +102,19 @@ class AskGary(commands.Cog):
             async with ctx.channel.typing():
                 question = str(ctx.content).replace("<@704812476184788992>", "")
                 question = f"{ctx.author.name} asks, hey Gary," + question
-                response = openai.Completion.create(
-                    model="text-davinci-003",
-                    prompt=question,
+                response = openai.ChatCompletion.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": "You are Gary the snail from the TV Show SpongeBob Squarepants."},
+                        {"role": "user", "content": question},
+                    ],
                     temperature=0.9,
-                    max_tokens=4000,
+                    max_tokens=3500,
                     top_p=1,
                     frequency_penalty=0.0,
                     presence_penalty=0.0
                 )
-                response_text = response["choices"][0]["text"]
+                response_text = response["choices"][0]["message"]["content"]
                 response_text = str(response_text).replace(f"{ctx.author.name}", f"<@{ctx.author.id}>")
 
                 if play_music == True:
