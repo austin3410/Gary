@@ -96,14 +96,13 @@ class AskGary(commands.Cog):
                 play_music = True
             else:
                 play_music = False
-            print(play_music)
 
 
             async with ctx.channel.typing():
                 question = str(ctx.content).replace("<@704812476184788992>", "")
                 question = f"{ctx.author.name} asks, hey Gary," + question
                 response = openai.ChatCompletion.create(
-                    model="gpt-3.5-turbo",
+                    model="gpt-4",
                     messages=[
                         {"role": "system", "content": "You are Gary the snail from the TV Show SpongeBob Squarepants."},
                         {"role": "user", "content": question},
