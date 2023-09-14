@@ -7,7 +7,7 @@ class Meow(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if str(message.author.id) != str(self.bot.id):
+        if str(message.author.id) != str(self.bot.id) and not str(message.content).startswith(f"<@{self.bot.id}>"):
             nicknames = ["GARY", "GARE", "GARE BEAR", self.bot.id]
             if [name for name in nicknames if name in message.content.upper()]:
                 return await message.channel.send("Meow.")

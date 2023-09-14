@@ -487,6 +487,7 @@ class BBTCG_Games(commands.Cog):
         
         # First ID is Watch Together.
         activity_ids = [
+            755600276941176913, 
             880218394199220334,
             755827207812677713,
             773336526917861400,
@@ -507,12 +508,21 @@ class BBTCG_Games(commands.Cog):
             947957217959759964,
             976052223358406656,
             950505761862189096,
-            1006584476094177371
+            1006584476094177371,
+            1007373802981822582,
+            1039835161136746497,
+            1037680572660727838,
+            1000100849122553977,
+            1070087967294631976,
+            1001529884625088563,
+            1011683823555199066
         ]
-        
+    
         while True:
+            #print("Checking activities...")
             for guild in self.bot.guilds:
                 for member in guild.members:
+                    
                     try:
 
                         # Checks if user is in ANY activites.
@@ -520,6 +530,10 @@ class BBTCG_Games(commands.Cog):
 
                             if member.activity == None:
                                 continue
+                            else:
+                                pass
+                                #print(member.name)
+                                #print(member.activity)
 
                             # Checks if the activity is a Discord Activites Game.
                             if hasattr(member.activity, "application_id"):
@@ -531,7 +545,7 @@ class BBTCG_Games(commands.Cog):
                                 # Checks to see if we've set a custom profile for the activity.
                                 ref_act = None
                                 ref_act = [x for x in activity_ids if x == int(current_act.application_id)]
-
+                                #print("Member is in activity with known app id.")
                                 # Checks if the party size is equal to or larger than 2.
                                 if "size" in current_act.party:
                                     party_size = current_act.party["size"][0]
@@ -548,10 +562,16 @@ class BBTCG_Games(commands.Cog):
                                                 elif ref_act != None:
                                                     user["money"] += 5
                                                     #print(f"{member.name} was awarded $5 for participating in {current_act.name}!")
+                                                else:
+                                                    pass
+                                                    #print(f"{member.name} is participating in an unknown activity: {current_act.name} - {current_act.id}")
 
                                                 #print(current_act.to_dict())
                                                 #print(ref_act[0])
                                                 self.BBTools.save_user(self, user=user)
+                                else:
+                                    pass
+                                    #print("No party size..")
                     except Exception as e:
                         print("[BBTCG Games] Something went wrong in the Activity Reward System!")
                         print(e)

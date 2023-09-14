@@ -6,6 +6,7 @@ import openai
 from discord.commands import Option
 import io
 import aiohttp
+from PIL import Image
 
 # This function pulls a file from memory so we can send it to Discord without saving it.
 async def get_image_file(img_url):
@@ -20,65 +21,67 @@ async def get_image_file(img_url):
 
 # This is the class that controls how the /image previw window looks and works.
 class ImageViewer(discord.ui.View):
-    def __init__(self, img_url, timeout=None):
+    def __init__(self, img_url=None, timeout=None):
         super().__init__(timeout=timeout)
         self.img_url = img_url
-    
-    # Disabled for now because OpenAI's docs suck.
-    """async def modal_callback(self, interaction):
-        #revision_prompt = interaction.data["components"][0]["components"][0]["value"]
-        og_image_url = interaction.message.embeds[0].image.url
-        print(og_image_url)
-
-        response = openai.Image.create_variation(
-          image=og_image_url,
-          n=1,
-          size="1024x1024"
-        )
-        image_url = response['data'][0]['url']
-
-        data = await get_image_file(image_url)
-
-        if data == False:
-            return await interaction.response.send_message("Something went wrong, I couldn't generate the image. Please try again.")
-        
-        interaction_thread = await interaction.message.create_thread(name="Revised Images:")
-
-        #filename = str(revision_prompt[0:12]).replace(" ", "_")
-        filename = "revised_photo"
-        file = discord.File(data, f"{filename}.png")
-        
-        embed = discord.Embed(title=f"{interaction.user.name}'s Image")
-        embed.set_image(url=f"attachment://{filename}.png")
-        await interaction_thread.send(embed=embed, file=file)
-
-        self.stop()"""
-
-        
 
     # This button simply sends the image to the person who clicked the button.
     @discord.ui.button(label="Save", emoji="💾", style=discord.ButtonStyle.success)
     async def save_image(self, button, interaction):
-        
         msg = await interaction.user.send(self.img_url)
         await interaction.message.add_reaction(emoji="⭐")
         return await interaction.response.send_message(f"I've DM'd you this image!\n{msg.jump_url}", ephemeral=True)
+
+    # This button creates a variation of the previously created image.
+    # Then creates a View loop more or less by spawning another instance of the ImageViewer View within itself...
+    @discord.ui.button(label="Create Variation", emoji="🤩", style=discord.ButtonStyle.blurple)
+    async def variate_image(self, button, interaction: discord.Interaction):
+        # First we need to tell the user we're working on it.
+        # We can't simply defer the message, otherwise we would replace the original image.
+        await interaction.response.send_message(f"<@{interaction.user.id}>, creating variation...")
+
+        # Now we get the current image URL.        
+        img = await get_image_file(self.img_url)
         
-    # Disabled for now because OpenAI's docs suck.
-    """@discord.ui.button(label="Revise", emoji="🤩", style=discord.ButtonStyle.blurple)
-    async def revise_image(self, button, interaction: discord.Interaction):
+        # Then we need to make it a little smaller to fit withint OpenAI's size limit of 4MB
+        pilImage = Image.open(img)
+        pilImage.resize((256, 256))
+        img_bytes = io.BytesIO()
+        pilImage.save(img_bytes, format='PNG')
+        img_bytes = img_bytes.getvalue()
+        img_mb = len(img_bytes) / 1024 / 1024
+        if img_mb > 4:
+            print(f"Can't variate, minimized image is too large at {img_mb}MB. (4MB max)")
+            return await interaction.edit_original_response("Something went wrong, I couldn't generate the image. Please try again.")
 
-        modal = discord.ui.Modal(title="Revise an Image...")
-        modal.add_item(discord.ui.InputText(label="Revision Prompt", placeholder="What would you like to add or change?", min_length=1, required=True))
-        modal.callback = self.modal_callback
-
-        await interaction.response.send_modal(modal=modal)
-        modal_return = await modal.wait()
-
+        # Now we make an API request to create a variation of an image, and pass our minimized image.
+        response = openai.Image.create_variation(
+            image=img_bytes,
+            n=1,
+            size="1024x1024"
+        )
+        new_img_url = response["data"][0]["url"]
         
+        # This converts the image into a useable format we can feed straight into Discord without first saving the file.
+        data = await get_image_file(new_img_url)
 
-        print(modal_return)
-        print(modal.to_dict())"""
+        if data == False:
+            return await interaction.edit_original_response("Something went wrong, I couldn't generate the image. Please try again.")
+        
+        # This gives the image a "file name" incase a user does actually want to download and save the image.
+        filename = "varitation.png"
+        file = discord.File(data, f"{filename}.png")
+        
+        # Here we generate the embed.
+        embed = discord.Embed(title=f"{interaction.user.name}'s Image")
+        embed.set_image(url=f"attachment://{filename}.png")
+
+        # Now we edit the original response with the new (nested) view.
+        response = await interaction.edit_original_response(content="", embed=embed, file=file, view=ImageViewer())
+        
+        # Lastly, we update the img_url variable with the new Discord CDN URL of our image variation.
+        # This lets up keep creating image variations forever!
+        await interaction.edit_original_response(view=ImageViewer(img_url=response.embeds[0].image.url))
 
 # This class handles talking to Gary.
 class AskGary(commands.Cog):
@@ -265,7 +268,7 @@ class AskGary(commands.Cog):
         # Here we generate the embed.
         embed = discord.Embed(title=f"{ctx.author.name}'s Image")
         embed.set_image(url=f"attachment://{filename}.png")
-        msg = await ctx.followup.send(embed=embed, file=file)
+        msg = await ctx.followup.send(embed=embed, file=file, view=ImageViewer())
         await msg.edit(view=ImageViewer(img_url=msg.embeds[0].image.url))
 
 # Standard bot setup.
