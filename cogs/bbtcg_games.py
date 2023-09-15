@@ -1,6 +1,6 @@
 import discord
 from discord.commands import slash_command, Option  # Importing the decorator that makes slash commands.
-from discord.ext.commands.core import check
+from discord.ext.commands.core import check, cooldown
 from discord.ext import commands
 from discord import ButtonStyle
 from discord.ui import View, button, Item, Button
@@ -133,6 +133,7 @@ class BBTCG_Games(commands.Cog):
     # SNAIL RACE - Slash command
     @slash_command(name="snailrace", description="Race snails for a chance to win a BBTCG card or BBTCG cash!")
     @check(before_invoke_channel_check)
+    @cooldown(1, 90, commands.BucketType.user)
     async def snailrace(self, ctx, delay: discord.Option(discord.SlashCommandOptionType.integer, description="How many seconds before the game starts? (10-60)", min_value=30, max_value=60, default=30)):
 
         # This allows the player to set a delay between 10 and 60 seconds to let people join.
