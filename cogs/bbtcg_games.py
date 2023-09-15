@@ -133,7 +133,7 @@ class BBTCG_Games(commands.Cog):
     # SNAIL RACE - Slash command
     @slash_command(name="snailrace", description="Race snails for a chance to win a BBTCG card or BBTCG cash!")
     @check(before_invoke_channel_check)
-    @cooldown(1, 90, commands.BucketType.user)
+    @cooldown(1, 90, commands.BucketType.guild)
     async def snailrace(self, ctx, delay: discord.Option(discord.SlashCommandOptionType.integer, description="How many seconds before the game starts? (10-60)", min_value=30, max_value=60, default=30)):
 
         # This allows the player to set a delay between 10 and 60 seconds to let people join.
