@@ -55,7 +55,7 @@ In order to use the FFMPEG music cog, you'll need to do the following:
 
 Within ``gary.py``:
 
-- Change the ``wavelink_music`` entry in the ``cogs_to_load`` list to ``old_music``
+- Change the ``wavelink_music`` entry in the ``cogs_to_load`` list to ``DEPRICATED-music``
 
 **Windows:**
 
@@ -65,8 +65,8 @@ Download `FFMPEG <https://ffmpeg.org/download.html>`__  and place it in Gary's r
 
 Install FFMPEG through your preferred package manager.
 
-DEPRICATED FEATURES
--------------------
+USING DEPRICATED FEATURES
+-------------------------
 Some features have been replaced with better versions or removed entirely and replaced by native Discord integrations.
 If you wish to re-activate these features, simply add the file name to Gary's ``cogs_to_load`` list in ``gary.py``.
 
@@ -74,3 +74,4 @@ If you wish to re-activate these features, simply add the file name to Gary's ``
 
 - ``DEPRICATED-subscribe.py`` - Replaced by Discord's Forum Channels. This featured allowed users to see channels that they were interested in and be hidden from ones they weren't.
 - ``DEPRICATED-yesno.py`` - Replaced by ``askgary.py``. This feature allowed users to @Gary with a Yes or No question which would be answered by Gary.
+- ``DEPRICATED-music.py`` - Replaced by ``wavelink_music.py``. This is the old FFMPEG based music cog. It should look and work nearly the same. Refer to the "FFMPEG Music" section.

@@ -133,10 +133,10 @@ class BBTCG_Games(commands.Cog):
     # SNAIL RACE - Slash command
     @slash_command(name="snailrace", description="Race snails for a chance to win a BBTCG card or BBTCG cash!")
     @check(before_invoke_channel_check)
-    async def snailrace(self, ctx, delay: Option(int, "How many seconds before the game starts? (10-60)")):
+    async def snailrace(self, ctx, delay: discord.Option(discord.SlashCommandOptionType.integer, description="How many seconds before the game starts? (10-60)", min_value=30, max_value=60, default=30)):
 
         # This allows the player to set a delay between 10 and 60 seconds to let people join.
-        if delay < 10 or delay > 60:
+        if delay < 30 or delay > 60:
             return await ctx.respond("Delays can be between 10 and 60 seconds!", ephemeral=True)
         
         # This is responsible for the join game button.
@@ -148,15 +148,45 @@ class BBTCG_Games(commands.Cog):
         joingame.stop()
 
         # Makes sure that there are at least 2 players.
-        if len(joingame.players) <= 1:
-            return await joingame.message.edit(content="No one else joined the race so it's been canceled!", delete_after=10, view=None)
+        #if len(joingame.players) <= 1:
+        #    return await joingame.message.edit(content="No one else joined the race so it's been canceled!", delete_after=10, view=None)
     
         # This is the player class which houses player specific details.
         class Player:
             
-            def __init__(self, player):
+            def __init__(self, player, bot=False):
                 self.user = player
+                self.name = self.user.name
                 self.progress = 0
+                self.bot = bot
+        
+        # This is the bot class which houses bot specific details.
+        class Bot_Player:
+            def __init__(self):
+                character_names = [
+                    "SpongeBob SquarePants",
+                    "Patrick Star",
+                    "Squidward Tentacles",
+                    "Sandy Cheeks",
+                    "Mr. Krabs",
+                    "Plankton",
+                    "Gary the Snail",
+                    "Pearl Krabs",
+                    "Mrs. Puff",
+                    "Larry the Lobster",
+                    "Mermaid Man",
+                    "Barnacle Boy",
+                    "Man Ray",
+                    "The Flying Dutchman",
+                    "Bubble Bass",
+                    "King Neptune",
+                    "Patchy the Pirate",
+                    "Potty the Parrot",
+                    "Karen Plankton",
+                    "Squilliam Fancyson"
+                ]
+                self.name = choice(character_names)
+                self.id = 0
         
         # This is the actual SnailRace Class which houses all of the game logic.
         class SnailRace:
@@ -167,8 +197,19 @@ class BBTCG_Games(commands.Cog):
                 self.players = []
                 for p in players:
                     self.players.append(Player(p))
+
+                target_players = randint(3,5)
+
+                if len(self.players) < target_players:
+                    needed_bots = target_players - len(self.players)
+
+                    for b in range(needed_bots):
+                        b = Bot_Player()
+                        self.players.append(Player(b, bot=True))
+                
                 self.winner = None
                 self.last_status_update = None
+                self.pot = 5 * len(self.players)
             
             # This is responsible for updating the scoreboard during a race.
             async def show_status(self):
@@ -181,7 +222,10 @@ class BBTCG_Games(commands.Cog):
                     pip = "+" * pip
                     pip_remain = "=" * pip_remain
 
-                    status_msg += f"🏁{pip_remain}🐌{pip}: - {player.user.name}\n"
+                    if player.bot == False:
+                        status_msg += f"🏁{pip_remain}🐌{pip}: - <@{player.user.id}>\n"
+                    else:
+                        status_msg += f"🏁{pip_remain}🐌{pip}: - {player.name}\n"
 
                 self.last_status_update = status_msg
                 await joingame.message.edit(content=status_msg, view=None)
@@ -191,7 +235,10 @@ class BBTCG_Games(commands.Cog):
             def take_turn(self):
 
                 for p in self.players:
-                    p.progress += randint(1, 30)
+                    if p.bot == False:
+                        p.progress += randint(1, 30)
+                    else:
+                        p.progress += randint(1, 25)
 
                 r = self.check_winner()
 
@@ -222,22 +269,24 @@ class BBTCG_Games(commands.Cog):
             og_msg = sr.last_status_update
             win_msg = og_msg + f"The Game is Over! It's a tie between:\n"
             for winner in sr.winner:
-                win_msg += f"{winner.user.name}\n"
+                win_msg += f"{winner.name}\n"
             await joingame.message.edit(content=win_msg, view=None)
-            winnings = 10
+            winnings = int(math.floor(sr.pot / len(sr.winner)))
         
         else:
             og_msg = sr.last_status_update
-            win_msg = og_msg + f"\nThe Game is Over! {sr.winner[0].user.name} is the winner!"
+            win_msg = og_msg + f"\nThe Game is Over! {sr.winner[0].name} is the winner!"
             await joingame.message.edit(content=win_msg, view=None)
-            winnings = 15
+            winnings = sr.pot
 
         # This For loop handles reward payouts.
         for winner in sr.winner:
+            if winner.bot == True:
+                continue
             bbtcg_user = self.BBTools.load_user(self, uid=winner.user.id)
             # The prize roll is a roll to see if the user wins a card instead of BBTCG cash.
-            prize_roll = randint(1, 50)
-            if prize_roll == 25:
+            prize_roll = randint(1, 15)
+            if prize_roll == 10:
                 cards = self.BBTools.load_cards(self)
                 prize_card = choice(cards)
                 bbtcg_user["inventory"].append(prize_card)
