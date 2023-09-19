@@ -26,45 +26,45 @@ class CheckAchievements():
         else:
             return False
     
-    def NCC(self, user):
+    """def NCC(self, user):
         uid = str(inspect.currentframe().f_code.co_name)
         if len(user["inventory"]) >= 5:
             payload = {"uid": uid, "name": "Novice Card Collector", "description": "Have at least five cards in your inventory.", "reward": 50, "color": self.common["color"], "rarity": self.common["rarity"]}
             return payload
         else:
-            return False
+            return False"""
     
-    def ICC(self, user):
+    """def ICC(self, user):
         uid = str(inspect.currentframe().f_code.co_name)
         if len(user["inventory"]) >= 10:
             payload = {"uid": uid, "name": "Intermediate Card Collector", "description": "Have at least 10 cards in your inventory.", "reward": 100, "color": self.common["color"], "rarity": self.common["rarity"]}
             return payload
         else:
-            return False
+            return False"""
     
-    def ECC(self, user):
+    """def ECC(self, user):
         uid = str(inspect.currentframe().f_code.co_name)
         if len(user["inventory"]) >= 20:
             payload = {"uid": uid, "name": "Expert Card Collector", "description": "Have at least 20 cards in your inventory.", "reward": 200, "color": self.rare["color"], "rarity": self.rare["rarity"]}
             return payload
         else:
-            return False
+            return False"""
     
     def MCC(self, user):
         uid = str(inspect.currentframe().f_code.co_name)
-        if len(user["inventory"]) >= 30:
-            payload = {"uid": uid, "name": "Master Card Collector", "description": "Have at least 30 cards in your inventory.", "reward": 300, "color": self.epic["color"], "rarity": self.epic["rarity"]}
+        if len(user["inventory"]) >= 25:
+            payload = {"uid": uid, "name": "Master Card Collector", "description": "Have at least 25 cards in your inventory.", "reward": 200, "color": self.rare["color"], "rarity": self.rare["rarity"]}
             return payload
         else:
             return False
     
-    def COC(self, user):
+    """def COC(self, user):
         uid = str(inspect.currentframe().f_code.co_name)
         if len(user["inventory"]) >= 50:
             payload = {"uid": uid, "name": "Curator of Cards", "description": "Have at least 50 cards in your inventory.", "reward": 500, "color": self.legendary["color"], "rarity": self.legendary["rarity"]}
             return payload
         else:
-            return False
+            return False"""
     
     def IATC(self, user):
         uid = str(inspect.currentframe().f_code.co_name)
@@ -89,7 +89,7 @@ class CheckAchievements():
         common_count = card_rarities.count("Common")
         if common_count >= 20:
             payload = {"uid": uid, "name": "Bottom Feeder",
-            "description": "Have at least 20 Common cards in your inventory at the same time.", "reward": 250, "color": self.rare["color"], "rarity": self.rare["rarity"]}
+            "description": "Have at least 20 Common cards in your inventory at the same time.", "reward": 200, "color": self.rare["color"], "rarity": self.rare["rarity"]}
             return payload
         else:
             return False
@@ -226,7 +226,7 @@ class CheckAchievements():
     # Statistical Achievements                                                                     #
     ################################################################################################
 
-    def FL(self, user):
+    """def FL(self, user):
         uid = str(inspect.currentframe().f_code.co_name)
 
         if user["slots_stats"]["slots_played"] >= 100:
@@ -234,19 +234,19 @@ class CheckAchievements():
             "description": "Play slots 100 times.", "reward": 25, "color": self.common["color"], "rarity": self.common["rarity"]}
             return payload
         else:
-            return False
+            return False"""
     
-    def SSDD(self, user):
+    def FL(self, user):
         uid = str(inspect.currentframe().f_code.co_name)
 
         if user["slots_stats"]["slots_played"] >= 250:
-            payload = {"uid": uid, "name": "Same Slots Different Day",
+            payload = {"uid": uid, "name": "Feelin' Lucky",
             "description": "Play slots 250 times.", "reward": 100, "color": self.rare["color"], "rarity": self.rare["rarity"]}
             return payload
         else:
             return False
     
-    def SITWI(self, user):
+    """def SITWI(self, user):
         uid = str(inspect.currentframe().f_code.co_name)
 
         if user["slots_stats"]["slots_played"] >= 500:
@@ -254,19 +254,19 @@ class CheckAchievements():
             "description": "Play slots 500 times.", "reward": 200, "color": self.epic["color"], "rarity": self.epic["rarity"]}
             return payload
         else:
-            return False
+            return False"""
     
     def BB(self, user):
         uid = str(inspect.currentframe().f_code.co_name)
 
-        if user["shop_stats"]["steals_purchased"] >= 1:
+        if user["shop_stats"]["steals_purchased"] >= 5:
             payload = {"uid": uid, "name": "Breaking Bad",
-            "description": "Steal someone else's card.", "reward": 25, "color": self.common["color"], "rarity": self.common["rarity"]}
+            "description": "Steal 5 cards.", "reward": 25, "color": self.common["color"], "rarity": self.common["rarity"]}
             return payload
         else:
             return False
     
-    def DMIID(self, user):
+    """def DMIID(self, user):
         uid = str(inspect.currentframe().f_code.co_name)
 
         if user["shop_stats"]["steals_purchased"] >= 5:
@@ -274,9 +274,9 @@ class CheckAchievements():
             "description": "Steal 5 cards.", "reward": 100, "color": self.rare["color"], "rarity": self.rare["rarity"]}
             return payload
         else:
-            return False
+            return False"""
     
-    def MW(self, user):
+    """def MW(self, user):
         uid = str(inspect.currentframe().f_code.co_name)
 
         if user["shop_stats"]["steals_purchased"] >= 10:
@@ -284,19 +284,19 @@ class CheckAchievements():
             "description": "Steal 10 cards.", "reward": 200, "color": self.epic["color"], "rarity": self.epic["rarity"]}
             return payload
         else:
-            return False
+            return False"""
     
-    def I(self, user):
+    def MW(self, user):
         uid = str(inspect.currentframe().f_code.co_name)
 
-        if user["shop_stats"]["steals_purchased"] >= 20:
-            payload = {"uid": uid, "name": "Infamous",
-            "description": "Steal 20 cards.", "reward": 350, "color": self.legendary["color"], "rarity": self.legendary["rarity"]}
+        if user["shop_stats"]["steals_purchased"] >= 25:
+            payload = {"uid": uid, "name": "Most Wanted",
+            "description": "Steal 25 cards.", "reward": 350, "color": self.legendary["color"], "rarity": self.legendary["rarity"]}
             return payload
         else:
             return False
     
-    def DS(self, user):
+    """def DS(self, user):
         uid = str(inspect.currentframe().f_code.co_name)
 
         if user["market_stats"]["cards_purchased"] >= 1:
@@ -304,7 +304,7 @@ class CheckAchievements():
             "description": "Purchase 1 cards from the market.", "reward": 25, "color": self.common["color"], "rarity": self.common["rarity"]}
             return payload
         else:
-            return False
+            return False"""
     
     def PT(self, user):
         uid = str(inspect.currentframe().f_code.co_name)
@@ -316,7 +316,7 @@ class CheckAchievements():
         else:
             return False
     
-    def DD(self, user):
+    """def DD(self, user):
         uid = str(inspect.currentframe().f_code.co_name)
 
         if user["market_stats"]["cards_purchased"] >= 10:
@@ -324,14 +324,14 @@ class CheckAchievements():
             "description": "Purchase 10 cards off of the market.", "reward": 100, "color": self.epic["color"], "rarity": self.epic["rarity"]}
             return payload
         else:
-            return False
+            return False"""
     
     def OMT(self, user):
         uid = str(inspect.currentframe().f_code.co_name)
 
-        if user["market_stats"]["cards_purchased"] >= 20:
+        if user["market_stats"]["cards_purchased"] >= 25:
             payload = {"uid": uid, "name": "One Man's Trash",
-            "description": "Purchase 20 cards off of the market.", "reward": 200, "color": self.legendary["color"], "rarity": self.legendary["rarity"]}
+            "description": "Purchase 25 cards off of the market.", "reward": 200, "color": self.legendary["color"], "rarity": self.legendary["rarity"]}
             return payload
         else:
             return False
