@@ -216,7 +216,8 @@ class BBTCG(commands.Cog):
                         }, 
                     "slots_stats": {
                         "slots_played": 0, 
-                        "time_since_last_played": 0
+                        "time_since_last_played": 0,
+                        "last_played_earnings": 0
                         }
                     }
                 pickle.dump(user, file)
@@ -1283,10 +1284,16 @@ class BBTCG(commands.Cog):
             await thread.send(f"You played slots {spun} times and lost ${str(net)[1:]}")
         
         user["slots_stats"]["slots_played"] += spun
+        
+        user["slots_stats"]["last_played_earnings"] = net
 
         user_saved = self.save_user(user)
         if user_saved != True:
             return print("Something went wrong. Unable to save user in slots.")
+
+        # Checks for earned achievements.
+        await self.check_for_achievements(user, message)
+        await self.record_history()
     
     # CASH command - Prints the amount of cash a player has.
     @slash_command(name="cash", description="Shows you your current BBTCG cash.")

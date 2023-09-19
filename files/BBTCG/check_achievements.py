@@ -335,3 +335,23 @@ class CheckAchievements():
             return payload
         else:
             return False
+    
+    def YS(self, user):
+        uid = str(inspect.currentframe().f_code.co_name)
+
+        if -50 >= user["slots_stats"]["last_played_earnings"]:
+            payload = {"uid": uid, "name": "You Stink!",
+            "description": "Lose at least $50 in a single game of slots!", "reward": 0, "color": self.legendary["color"], "rarity": self.legendary["rarity"]}
+            return payload
+        else:
+            return False
+    
+    def VS(self, user):
+        uid = str(inspect.currentframe().f_code.co_name)
+
+        if user["slots_stats"]["last_played_earnings"] >= 500:
+            payload = {"uid": uid, "name": "Victory Screech!",
+            "description": "Win at least $500 in a single game of slots!", "reward": 0, "color": self.legendary["color"], "rarity": self.legendary["rarity"]}
+            return payload
+        else:
+            return False
