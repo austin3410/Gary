@@ -7,6 +7,7 @@ from discord.commands import Option
 import io
 import aiohttp
 from PIL import Image
+from math import ceil
 
 # This function pulls a file from memory so we can send it to Discord without saving it.
 async def get_image_file(img_url):
@@ -94,6 +95,23 @@ class AskGary(commands.Cog):
         # Adjust Gary's personality to be more or less true to the show.
         self.bot_personality = "You are Gary the snail from the TV Show SpongeBob Squarepants in a Discord server called Bikini Bottom. You're very helpful and enjoy answering everyones questions."
         
+    def split_response_text(self, response_text):
+        if len(response_text) > 2000:
+            required_messages = ceil(len(response_text) / 2000)
+            message_block_size = int(len(response_text) / required_messages)
+            cursor_location = 0
+            messages = []
+            for i in range(required_messages):
+                block_end = ceil(int(cursor_location) + int(message_block_size))
+                message_block = response_text[cursor_location:block_end]
+                messages.append(message_block)
+                cursor_location = block_end
+            
+            return messages
+        else:
+            return response_text
+
+    
     # This function handles generating message blocks that get sent to ChatGPT and formating the questions/responses.
     async def generate_response(self, ctx, history=None):
 
@@ -137,14 +155,16 @@ class AskGary(commands.Cog):
         # This is the actual request for a chat completion.
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
+                model="gpt-3.5-turbo-16k",
                 messages=messages, # This is our contructed block of past messages + our new message.
                 temperature=0.9,
-                max_tokens=3000,
+                max_tokens=15000,
                 top_p=1,
                 frequency_penalty=0.0,
                 presence_penalty=0.0
             )
+        except openai.error.InvalidRequestError:
+            return "Sorry, I've reached my token limit. You'll need to start another conversation."
         except Exception as e:
             if "safety system" in str(e):
                 return "Your prompt was rejected by the safety team. Try altering your request!"
@@ -174,9 +194,14 @@ class AskGary(commands.Cog):
                     # This is the start of a new conversation thread.
                     # Generate response text, create a thread, send the response.
                     response_text = await self.generate_response(ctx)
+                    response_text = self.split_response_text(response_text)
                     thread_name = f"{ctx.author.name}'s Thread"
                     convo_thread = await ctx.create_thread(name=thread_name)
-                    return await convo_thread.send(response_text)
+                    if isinstance(response_text, list):
+                        for message in response_text:
+                            await convo_thread.send(message)
+                    else:
+                        return await convo_thread.send(response_text)
 
             # If the channel is a thread, voice_text, or private/dm channel.
             if ctx.channel.type in [discord.ChannelType.public_thread, discord.ChannelType.voice, discord.ChannelType.private]:
@@ -213,9 +238,14 @@ class AskGary(commands.Cog):
                             
                         # Now that we have our convo history, we can generate a response from ChatGPT.
                         response_text = await self.generate_response(ctx, history=history)
+                        response_text = self.split_response_text(response_text)
 
                         # This replies instead of creating a thread since we're already in a thread, or the channel doesn't support a thread.
-                        return await ctx.reply(response_text)
+                        if isinstance(response_text, list):
+                            for message in response_text:
+                                await ctx.reply(message)
+                        else:
+                            return await ctx.reply(response_text)
 
                 # If there's no reference, that means this is the start of a new conversation.
                 # Depending on where this conversation is taking place we either NEED to be @ mentioned... or not.
@@ -225,14 +255,24 @@ class AskGary(commands.Cog):
                         # Start typing...
                         async with ctx.channel.typing():
                             response_text = await self.generate_response(ctx)
-                            return await ctx.reply(response_text)
+                            response_text = self.split_response_text(response_text)
+                            if isinstance(response_text, list):
+                                for message in response_text:
+                                    await ctx.reply(message)
+                            else:
+                                return await ctx.reply(response_text)
                     
                     # If Gary isn't @ mentioned and it is a DM, then that's fine, we can proceed as normal. Plus we know it's not a on-going convo because it's NOT a reply.
                     elif ctx.channel.type == discord.ChannelType.private:
                         # Start typing...
                         async with ctx.channel.typing():
                             response_text = await self.generate_response(ctx)
-                            return await ctx.reply(response_text)
+                            response_text = self.split_response_text(response_text)
+                            if isinstance(response_text, list):
+                                for message in response_text:
+                                    await ctx.reply(message)
+                            else:
+                                return await ctx.reply(response_text)
 
     # This is the slash command to generate images.
     @slash_command(name="image", description="Gary will use AI to generate an image with the given prompt!")
