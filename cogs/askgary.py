@@ -94,18 +94,26 @@ class AskGary(commands.Cog):
 
         # Adjust Gary's personality to be more or less true to the show.
         self.bot_personality = "You are Gary the snail from the TV Show SpongeBob Squarepants in a Discord server called Bikini Bottom. You're very helpful and enjoy answering everyones questions."
-        
+
+    # We need this function incase the response_text is longer than Discords tiny 2000/message character limit.    
     def split_response_text(self, response_text):
+        
+        # First we check if the response is actually over the limit.
+        # If it's not, we'll just pass it as is.
         if len(response_text) > 2000:
-            required_messages = ceil(len(response_text) / 2000)
-            message_block_size = int(len(response_text) / required_messages)
+            
+            # This basically lets us remember how much of the message we've split and how much needs splitting.
             cursor_location = 0
+            
+            # This stores our message "chunks".
             messages = []
-            for i in range(required_messages):
-                block_end = ceil(int(cursor_location) + int(message_block_size))
-                message_block = response_text[cursor_location:block_end]
+            
+            # This runs through the response and creates smaller messages, 2000 characters at a time.
+            while cursor_location < len(response_text):
+                
+                message_block = response_text[cursor_location:(cursor_location + 2000)]
                 messages.append(message_block)
-                cursor_location = block_end
+                cursor_location += 2000
             
             return messages
         else:
