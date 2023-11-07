@@ -286,11 +286,22 @@ class AskGary(commands.Cog):
                             else:
                                 return await ctx.reply(response_text)
 
+    # This is the autocomplete context for the below create_image function.
+    #async def get_image_size(ctx: discord.AutocompleteContext):
+
+    
     # This is the slash command to generate images.
     @slash_command(name="image", description="Gary will use AI to generate an image with the given prompt!")
-    async def create_image(self, ctx, prompt: Option(str, description="What would you like Gary to create an image of?")):
+    async def create_image(self, ctx, prompt: Option(str, description="What would you like Gary to create an image of?"), size: discord.Option(str, choices=["Square", "Portrait", "Landscape"], default="Square")):
         # We want to defer this because this operation will almost certainly take longer than 3 seconds.
         await ctx.defer()
+
+        if size == "Square":
+            size = "1024x1024"
+        elif size == "Portrait":
+            size = "1024x1792"
+        elif size == "Landscape":
+            size = "1792x1024"
 
         # This is the actual request that generates the image.
         # We need to put it in a try incase the prompt violates ChatGPT's rules. (nudity, gore, etc.)
@@ -304,7 +315,7 @@ class AskGary(commands.Cog):
             response = self.client.images.generate(
                 model="dall-e-3",
                 prompt=prompt,
-                size="1024x1024",
+                size=size,
                 quality="hd",
                 n=1
             )
