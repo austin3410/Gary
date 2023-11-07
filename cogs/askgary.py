@@ -3,11 +3,11 @@ import discord
 from discord.commands import slash_command  # Importing the decorator that makes slash commands.
 from discord.ext import commands
 import openai
+from openai import OpenAI
 from discord.commands import Option
 import io
 import aiohttp
 from PIL import Image
-from math import ceil
 
 # This function pulls a file from memory so we can send it to Discord without saving it.
 async def get_image_file(img_url):
@@ -33,7 +33,7 @@ class ImageViewer(discord.ui.View):
         await interaction.message.add_reaction(emoji="⭐")
         return await interaction.response.send_message(f"I've DM'd you this image!\n{msg.jump_url}", ephemeral=True)
 
-    # This button creates a variation of the previously created image.
+    """# This button creates a variation of the previously created image.
     # Then creates a View loop more or less by spawning another instance of the ImageViewer View within itself...
     @discord.ui.button(label="Create Variation", emoji="🤩", style=discord.ButtonStyle.blurple)
     async def variate_image(self, button, interaction: discord.Interaction):
@@ -82,15 +82,19 @@ class ImageViewer(discord.ui.View):
         
         # Lastly, we update the img_url variable with the new Discord CDN URL of our image variation.
         # This lets up keep creating image variations forever!
-        await interaction.edit_original_response(view=ImageViewer(img_url=response.embeds[0].image.url))
+        await interaction.edit_original_response(view=ImageViewer(img_url=response.embeds[0].image.url))"""
 
 # This class handles talking to Gary.
 class AskGary(commands.Cog):
     # Inits the bot instance so we can do things like send messages and get other Discord information.
     def __init__(self, bot):
         self.bot = bot
-        openai.orginization = self.bot.openai_orginization
-        openai.api_key = self.bot.openai_key
+        self.client = OpenAI(api_key=self.bot.openai_key, organization=self.bot.openai_orginization)
+        #self.client.organization = self.bot.openai_orginization
+        #elf.client.api_key = self.bot.openai_key
+        #openai.orginization = self.bot.openai_orginization
+        #openai.api_key = self.bot.openai_key
+        
 
         # Adjust Gary's personality to be more or less true to the show.
         self.bot_personality = "You are Gary the snail from the TV Show SpongeBob Squarepants in a Discord server called Bikini Bottom. You're very helpful and enjoy answering everyones questions."
@@ -162,7 +166,7 @@ class AskGary(commands.Cog):
 
         # This is the actual request for a chat completion.
         try:
-            response = openai.ChatCompletion.create(
+            response = self.client.chat.completions.create(
                 model="gpt-3.5-turbo-16k",
                 messages=messages, # This is our contructed block of past messages + our new message.
                 temperature=0.9,
@@ -291,16 +295,25 @@ class AskGary(commands.Cog):
         # This is the actual request that generates the image.
         # We need to put it in a try incase the prompt violates ChatGPT's rules. (nudity, gore, etc.)
         try:
-            response = openai.Image.create(
+            """response = openai.Image.create(
               prompt=prompt,
               n=1,
               size="1024x1024"
+            )"""
+            #image_url = response['data'][0]['url']
+            response = self.client.images.generate(
+                model="dall-e-3",
+                prompt=prompt,
+                size="1024x1024",
+                quality="hd",
+                n=1
             )
-            image_url = response['data'][0]['url']
+            image_url = response.data[0].url
         except Exception as e:
             if "safety system" in str(e):
                 return await ctx.followup.send("Your prompt was rejected by the safety team. Try altering your request!", delete_after=30)
             else:
+                print(e)
                 return await ctx.followup.send("I couldn't complete the request at this time, please try again!", delete_after=30)
 
         # This converts the image into a useable format we can feed straight into Discord without first saving the file.
