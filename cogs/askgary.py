@@ -184,7 +184,7 @@ class AskGary(commands.Cog):
                 return "I couldn't complete the request at this time, please try again!"
         
         # The actual response text.
-        response_text = response["choices"][0]["message"]["content"]
+        response_text = str(response.choices[0].message.content)
         
         # This made user ids parsable by Discord but seems to be no longer needed.
         #response_text = str(response_text).replace(str(ctx.author.id), f"<@{ctx.author.id}>")
