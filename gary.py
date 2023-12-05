@@ -20,6 +20,7 @@ bot.token = env.token
 bot.serpapi_key = env.serpapi_key
 bot.openai_key = env.openai_key
 bot.openai_orginization = env.openai_orginization
+bot.gallery_channel_name = env.gallery_channel_name
 bot.logger = GaryLogging()
 
 # Then we start to load in all of the selected cogs in the cogs folder.
@@ -44,6 +45,8 @@ async def on_ready():
     for c in channels:
         if c.name == "admin-log":
             bot.admin_log = c
+        elif c.name == bot.gallery_channel_name:
+            bot.gallery_channel = c
     
     # This constructs all the background info for the help command.
     command_helps = {}

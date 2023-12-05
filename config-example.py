@@ -15,3 +15,4 @@ class BOTH:
         other_class.serpapi_key = "SERP API KEY"
         other_class.openai_key = "OPENAPI KEY"
         other_class.openai_orginization = "OPENAI ORGINIZATION"
+        other_class.gallery_channel_name = "GALLERY-CHANNEL-NAME"

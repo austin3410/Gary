@@ -1,4 +1,5 @@
 py-cord
+discord
 requests
 youtube-dl
 config

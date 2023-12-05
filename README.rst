@@ -1,5 +1,5 @@
 .. image:: https://img.shields.io/github/v/release/Pycord-Development/pycord?include_prereleases&label=Pycord%20Version&logo=github&sort=semver&style=for-the-badge&logoColor=white
-   :target: https://github.com/Pycord-Development/pycord/releases/tag/v2.0.0
+   :target: https://github.com/Pycord-Development/pycord/releases/tag/v2.4.1
    :alt: Pycord Version
 
 About
@@ -21,6 +21,7 @@ All of these requirements should be added to ``config.py`` as seen in ``config-e
 - ``other_class.serpapi_key`` - A `SERPAPI <https://serpapi.com/>`__ API key used in the ``gif.py`` cog.
 - ``other_class.openai_key`` - An `OpenAI <https://beta.openai.com/>`__ API key used in the ``askgary.py`` cog.
 - ``other_class.openai_orginization`` - Your users `OpenAI <https://beta.openai.com/>`__ orginization used in the ``askgary.py`` cog.
+- ``other_class.gallery_channel_name`` - The name of a channel Gary will send saved images to.
 - All pip packages listed in ``requirements.txt``.
 - Gary uses the Wavelink library to play music and thus requires a Lavalink server.*
 
@@ -36,7 +37,7 @@ Gary comes with an assortment of features:
 - **Interactive Music Player** - A music player with buttons and menus, instead of all slash commands.
 - **SpongeBob Mock Case** - A message command to convert any previous message to mock case (will also automatically pick someone to mock)
 - **ChatGPT Powered AI Responses** - Any @Gary message is routed through ChatGPT for seemless AI answers, right in Discord!
-- **ChatGPT Powered AI Image Generation** - Use ChatGPT to generate AI images!
+- **ChatGPT Powered AI Image Generation** - Use DALL·E 3 to generate AI images!
 - **Much More!**
 
 Wavelink Music

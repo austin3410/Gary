@@ -16,8 +16,6 @@ import json
 import math
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
-from configparser import ConfigParser
-
 from files.BBTCG.check_achievements import CheckAchievements
 from .bbtcg_settings import BBTCG_Settings as BBTCG_Settings
 
@@ -144,8 +142,7 @@ class BBTCG(commands.Cog):
                 c["seller_id"] = 0
                 c["selling_start_time"] = datetime.now()
                 firesale = random.randint(0, int(self.settings["auto_market"]["firesale_chance"]))
-                if firesale == 25:
-                    print(f"Fire sale on {c['name']} !!!")
+                if firesale == (math.ceil(int(self.settings["auto_market"]["firesale_chance"]) / 2)):
                     c["selling_price"] = round(int(c["value"]) * float(self.settings["auto_market"]["firesale_mult"]))
                 else:
                     c["selling_price"] = round(int(c["value"]) * random.uniform(float(self.settings["auto_market"]["cardprice_min_mult"]), float(self.settings["auto_market"]["cardprice_max_mult"])))
