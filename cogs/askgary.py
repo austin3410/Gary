@@ -347,6 +347,7 @@ class AskGary(commands.Cog):
                 await ctx.author.send("Your prompt was rejected by the safety team. Try altering your request!")
                 return await ctx.followup.send("Something went wrong, please check Gary's DM.")
             else:
+                print(e)
                 await ctx.author.send("I couldn't complete the request at this time, please try again!")
                 return await ctx.followup.send("Something went wrong, please check Gary's DM.")
 
