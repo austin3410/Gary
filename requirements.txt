@@ -4,6 +4,6 @@ requests
 youtube-dl
 config
 google-search-results
-wavelink
+wavelink==1.3.5
 openai
 matplotlib
