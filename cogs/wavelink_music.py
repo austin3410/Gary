@@ -11,7 +11,10 @@ class PlayerControl(discord.ui.View):
                 def __init__(self, vc: wavelink.Player):
                     super().__init__(timeout=None)
                     self.vc = vc
-                    #print("[WaveLink] PlayerControl initialized.")
+                    if self.vc._autoplay == wavelink.AutoPlayMode.enabled:
+                        self.radio_mode = discord.ButtonStyle.success
+                    else:
+                        self.radio_mode = discord.ButtonStyle.gray
                 
                 @discord.ui.button(label="Play/Pause", emoji="⏯", style=discord.ButtonStyle.blurple)
                 async def toggle_playback_callback(self, button, interaction):
@@ -24,16 +27,15 @@ class PlayerControl(discord.ui.View):
                 
                 @discord.ui.button(label="Skip", emoji="⏩", style=discord.ButtonStyle.blurple)
                 async def skip_callback(self, button, interaction):
-                    await self.message.delete()
-                    await self.vc.stop()
+                    await self.vc.skip()
                     await interaction.response.send_message(f"{interaction.user.name} skipped the current song.", delete_after=5)
-                    self.stop()
                 
                 @discord.ui.button(label="Stop", emoji="⏹", style=discord.ButtonStyle.blurple)
                 async def stop_callback(self, button, interaction):
-                    await self.message.delete()
                     self.vc.queue.clear()
                     await self.vc.stop()
+                    self.vc.autoplay = wavelink.AutoPlayMode.partial
+                    await self.vc.disconnect()
                     await interaction.response.send_message(f"{interaction.user.name} stopped the music.", delete_after=5)
                     self.stop()
                 
@@ -58,7 +60,20 @@ class PlayerControl(discord.ui.View):
 
                     return await interaction.response.send_message(queue_msg, delete_after=15)
                 
-                filter_options = [
+                @discord.ui.button(label="Radio Mode", emoji="📻", style=discord.ButtonStyle.gray)
+                async def radio_callback(self, button, interaction):
+
+                    if self.vc._autoplay == wavelink.AutoPlayMode.partial:
+                        self.vc.autoplay = wavelink.AutoPlayMode.enabled
+                        button.style = discord.ButtonStyle.success
+                        await interaction.response.edit_message(view=self)
+                    elif self.vc._autoplay == wavelink.AutoPlayMode.enabled:
+                        self.vc.autoplay = wavelink.AutoPlayMode.partial
+                        button.style = discord.ButtonStyle.gray
+                        await interaction.response.edit_message(view=self)
+                        
+                
+                """filter_options = [
                     discord.SelectOption(label="Default Mix", value="Default 1 1 1"),
                     discord.SelectOption(label="Nightcore", value="Nightcore 1.2 1.2 1"),
                     discord.SelectOption(label="Lo-fi", value="Lo-fi .6 .9 1"),
@@ -78,7 +93,7 @@ class PlayerControl(discord.ui.View):
                     filters: wavelink.Filters = self.vc.filters
                     filters.timescale.set(pitch=new_filter[1], speed=new_filter[2], rate=new_filter[3])
                     await self.vc.set_filters(filters)
-                    await interaction.response.send_message(f"{interaction.user.name} set the filter to {new_filter[0]}.", delete_after=10)
+                    await interaction.response.send_message(f"{interaction.user.name} set the filter to {new_filter[0]}.", delete_after=10)"""
 
                 vol_options = [
                     discord.SelectOption(label="Volume 100"),
@@ -98,6 +113,9 @@ class Music(commands.Cog):
     # Inits the bot instance so we can do things like send messages and get other Discord information.
     def __init__(self, bot):
         self.bot = bot
+        self.player = None
+        self.player_control = None
+        self.player_control_msg = None
     
     @commands.Cog.listener()
     async def on_ready(self):
@@ -132,15 +150,58 @@ class Music(commands.Cog):
         if track.album.name:
             embed.add_field(name="Album", value=track.album.name)
 
-        player_control = PlayerControl(vc=player)
+        if self.player_control_msg == None and self.player_control == None:
+            self.player_control = PlayerControl(vc=player)
+            self.player_control_msg = await self.mr_channel.send(embed=embed, view=self.player_control)
+        else:
+            print("Editing player_control_msg")
+            await self.player_control_msg.edit(embed=embed, view=self.player_control)
 
-        await self.mr_channel.send(embed=embed, view=player_control)
+        await self.bot.change_presence(status=discord.Status.online, activity=discord.Game(name=f"{track.title}"))
 
+    # This triggers when a track finishes playing (whether it finishes naturally, or is stopped early).
+    @commands.Cog.listener()
+    async def on_wavelink_track_end(self, payload: wavelink.TrackEndEventPayload) -> None:
+        player: wavelink.Player | None = payload.player
+        if not player:
+            # Handle edge cases...
+            return
+        
+        if player._autoplay == wavelink.AutoPlayMode.enabled:
+            return
+        
+        if player.queue.is_empty and not player.playing:
+            await self.player_control_msg.delete()
+            self.player = None
+            self.player_control = None
+            self.player_control_msg = None
+            await self.bot.change_presence(status=discord.Status.online)
+            await asyncio.sleep(1)
+            await player.disconnect()
+        return
 
-    @slash_command(name="play", description="Play a song.")
-    async def play(self, ctx, query: Option(str, description="Song name or YouTube URL.")):
-        await ctx.defer()
-        """Play a song with the given query."""
+    @commands.Cog.listener()
+    async def on_wavelink_track_exception(self, payload: wavelink.TrackEndEventPayload) -> None:
+        print("TRACK EXCEPTION")
+    
+    @commands.Cog.listener()
+    async def on_wavelink_track_stuck(self, payload: wavelink.TrackEndEventPayload) -> None:
+        print("TRACK STUCK")
+    
+    @commands.Cog.listener()
+    async def on_wavelink_websocket_closed(self, payload: wavelink.TrackEndEventPayload) -> None:
+        print("WEBSOCKET CLOSED")
+    
+    @commands.Cog.listener()
+    async def on_wavelink_node_closed(self, payload: wavelink.TrackEndEventPayload) -> None:
+        print("NODE CLOSED")
+    
+    @commands.Cog.listener()
+    async def on_wavelink_extra_event(self, payload: wavelink.TrackEndEventPayload) -> None:
+        print("EXTRA EVENT")
+    
+    
+    async def create_player(self, ctx):
         if not ctx.guild:
             return
     
@@ -174,21 +235,32 @@ class Music(commands.Cog):
         # Seed the doc strings for more information on this method...
         # If spotify is enabled via LavaSrc, this will automatically fetch Spotify tracks if you pass a URL...
         # Defaults to YouTube for non URL based queries...
+
+        return player
+    
+    @slash_command(name="play", description="Play a song.")
+    async def play(self, ctx, query: Option(str, description="Song name or YouTube URL.")):
+        """Play a song with the given query."""
+        await ctx.defer()
+        
+        if self.player == None:
+            self.player = await self.create_player(ctx)
+        
         tracks: wavelink.Search = await wavelink.Playable.search(query)
         if not tracks:
             await ctx.respond(f"{ctx.author.mention} - Could not find any tracks with that query. Please try again.", delete_after=10)
             return
         if isinstance(tracks, wavelink.Playlist):
             # tracks is a playlist...
-            added: int = await player.queue.put_wait(tracks)
+            added: int = await self.player.queue.put_wait(tracks)
             await ctx.respond(f"Added the playlist **`{tracks.name}`** ({added} songs) to the queue.", delete_after=10)
         else:
             track: wavelink.Playable = tracks[0]
-            await player.queue.put_wait(track)
+            await self.player.queue.put_wait(track)
             await ctx.respond(f"Added **`{track}`** to the queue.", delete_after=10)
-        if not player.playing:
+        if not self.player.playing:
             # Play now since we aren't playing anything...
-            await player.play(player.queue.get(), volume=50)
+            await self.player.play(self.player.queue.get(), volume=50)
 
 # Standard bot setup.
 def setup(bot):
