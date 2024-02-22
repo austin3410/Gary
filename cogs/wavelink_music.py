@@ -32,12 +32,21 @@ class PlayerControl(discord.ui.View):
                 
                 @discord.ui.button(label="Stop", emoji="⏹", style=discord.ButtonStyle.blurple)
                 async def stop_callback(self, button, interaction):
-                    self.vc.queue.clear()
-                    await self.vc.stop()
-                    self.vc.autoplay = wavelink.AutoPlayMode.partial
-                    await self.vc.disconnect()
+                    #self.vc.queue.clear()
+                    #await self.vc.stop()
+                    #self.vc.autoplay = wavelink.AutoPlayMode.partial
+                    #await self.vc.disconnect()
                     await interaction.response.send_message(f"{interaction.user.name} stopped the music.", delete_after=5)
+
+                    
+                    self.player = None
+                    self.player_control = None
+                    self.player_control_msg = None
+                    await self.bot.change_presence(status=discord.Status.online)
+                    await asyncio.sleep(1)
+                    await self.vc.disconnect()
                     self.stop()
+                    await self.player_control_msg.delete()
                 
                 @discord.ui.button(label="Queue", emoji="📃", style=discord.ButtonStyle.blurple)
                 async def queue_callback(self, button, interaction):
@@ -60,7 +69,7 @@ class PlayerControl(discord.ui.View):
 
                     return await interaction.response.send_message(queue_msg, delete_after=15)
                 
-                @discord.ui.button(label="Radio Mode", emoji="📻", style=discord.ButtonStyle.gray)
+                @discord.ui.button(label="Radio Mode (Beta)", emoji="📻", style=discord.ButtonStyle.gray)
                 async def radio_callback(self, button, interaction):
 
                     if self.vc._autoplay == wavelink.AutoPlayMode.partial:
@@ -154,7 +163,6 @@ class Music(commands.Cog):
             self.player_control = PlayerControl(vc=player)
             self.player_control_msg = await self.mr_channel.send(embed=embed, view=self.player_control)
         else:
-            print("Editing player_control_msg")
             await self.player_control_msg.edit(embed=embed, view=self.player_control)
 
         await self.bot.change_presence(status=discord.Status.online, activity=discord.Game(name=f"{track.title}"))
@@ -191,6 +199,22 @@ class Music(commands.Cog):
     @commands.Cog.listener()
     async def on_wavelink_websocket_closed(self, payload: wavelink.TrackEndEventPayload) -> None:
         print("WEBSOCKET CLOSED")
+    
+    @commands.Cog.listener()
+    async def on_wavelink_inactive_player(self, player: wavelink.Player) -> None:
+        print("INACTIVE PLAYER")
+        
+        if player.paused:
+            return
+        
+        if player.autoplay == wavelink.AutoPlayMode.enabled:
+            await self.player_control_msg.delete()
+            self.player = None
+            self.player_control = None
+            self.player_control_msg = None
+            await self.bot.change_presence(status=discord.Status.online)
+            await asyncio.sleep(1)
+            await player.disconnect()
     
     @commands.Cog.listener()
     async def on_wavelink_node_closed(self, payload: wavelink.TrackEndEventPayload) -> None:
@@ -235,6 +259,7 @@ class Music(commands.Cog):
         # Seed the doc strings for more information on this method...
         # If spotify is enabled via LavaSrc, this will automatically fetch Spotify tracks if you pass a URL...
         # Defaults to YouTube for non URL based queries...
+        player.inactive_timeout = 10
 
         return player
     
