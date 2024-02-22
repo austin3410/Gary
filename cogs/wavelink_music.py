@@ -32,21 +32,12 @@ class PlayerControl(discord.ui.View):
                 
                 @discord.ui.button(label="Stop", emoji="⏹", style=discord.ButtonStyle.blurple)
                 async def stop_callback(self, button, interaction):
-                    #self.vc.queue.clear()
-                    #await self.vc.stop()
-                    #self.vc.autoplay = wavelink.AutoPlayMode.partial
-                    #await self.vc.disconnect()
-                    await interaction.response.send_message(f"{interaction.user.name} stopped the music.", delete_after=5)
-
-                    
-                    self.player = None
-                    self.player_control = None
-                    self.player_control_msg = None
-                    await self.bot.change_presence(status=discord.Status.online)
-                    await asyncio.sleep(1)
+                    self.vc.autoplay = wavelink.AutoPlayMode.partial
+                    self.vc.queue.clear()
+                    await self.vc.stop()
                     await self.vc.disconnect()
+                    await interaction.response.send_message(f"{interaction.user.name} stopped the music.", delete_after=5)
                     self.stop()
-                    await self.player_control_msg.delete()
                 
                 @discord.ui.button(label="Queue", emoji="📃", style=discord.ButtonStyle.blurple)
                 async def queue_callback(self, button, interaction):
