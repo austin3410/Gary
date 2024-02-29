@@ -1,4 +1,3 @@
-import discord
 from discord.commands import slash_command  # Importing the decorator that makes slash commands.
 from discord.ext import commands
 from math import floor

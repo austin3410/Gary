@@ -4,8 +4,6 @@ import discord
 import asyncio
 from typing import cast
 import wavelink
-from random import uniform
-
 
 class PlayerControl(discord.ui.View):
                 def __init__(self, vc: wavelink.Player):
@@ -71,29 +69,6 @@ class PlayerControl(discord.ui.View):
                         self.vc.autoplay = wavelink.AutoPlayMode.partial
                         button.style = discord.ButtonStyle.gray
                         await interaction.response.edit_message(view=self)
-                        
-                
-                """filter_options = [
-                    discord.SelectOption(label="Default Mix", value="Default 1 1 1"),
-                    discord.SelectOption(label="Nightcore", value="Nightcore 1.2 1.2 1"),
-                    discord.SelectOption(label="Lo-fi", value="Lo-fi .6 .9 1"),
-                    discord.SelectOption(label="Random", value="Random"),
-                ]
-                
-                @discord.ui.select(placeholder="Default Mix", options=filter_options)
-                async def set_filter(self, select, interaction):
-                    new_filter = select.values[0].split(" ")
-                    if new_filter[0] == "Random":
-                        p = uniform(.4, 1.5)
-                        s = uniform(.4, 1.5)
-                        new_filter.append(p)
-                        new_filter.append(s)
-                        new_filter.append(1)
-                        print(new_filter)
-                    filters: wavelink.Filters = self.vc.filters
-                    filters.timescale.set(pitch=new_filter[1], speed=new_filter[2], rate=new_filter[3])
-                    await self.vc.set_filters(filters)
-                    await interaction.response.send_message(f"{interaction.user.name} set the filter to {new_filter[0]}.", delete_after=10)"""
 
                 vol_options = [
                     discord.SelectOption(label="Volume 100"),
@@ -156,7 +131,7 @@ class Music(commands.Cog):
         else:
             await self.player_control_msg.edit(embed=embed, view=self.player_control)
 
-        await self.bot.change_presence(status=discord.Status.online, activity=discord.Game(name=f"{track.title}"))
+        await self.bot.change_presence(status=discord.Status.online, activity=discord.Game(name=f"{track.title} - {track.author}"))
 
     # This triggers when a track finishes playing (whether it finishes naturally, or is stopped early).
     @commands.Cog.listener()

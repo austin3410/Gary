@@ -1,20 +1,4 @@
-import asyncio
-from discord.commands import Option
 from discord.ext import commands
-from discord.commands import slash_command, user_command, SlashCommandGroup
-from discord.ext.commands import Cooldown  # Importing the decorator that makes slash commands.
-from discord.ext.commands.core import cooldown, check, dynamic_cooldown
-#from discord.ui import Button, View
-from datetime import datetime, timedelta
-from discord import default_permissions
-import discord
-import pickle
-import random
-import os
-import json
-from datetime import datetime, timedelta
-from discord.ui.input_text import InputText
-import matplotlib.pyplot as plt
 from configparser import ConfigParser
 
 class BBTCG_Settings(commands.Cog):
