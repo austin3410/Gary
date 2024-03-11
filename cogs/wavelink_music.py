@@ -14,19 +14,32 @@ class PlayerControl(discord.ui.View):
                     else:
                         self.radio_mode = discord.ButtonStyle.gray
                 
+                def embed_message(self, msg, color):
+                    colors = {
+                        "red": 0xf50f0f,
+                        "green": 0x20c814,
+                        "blue": 0x3093fd,
+                        "orange": 0xfd8c30
+                    }
+                    embed = discord.Embed(color=colors[color], title=msg)
+                    return embed
+                
                 @discord.ui.button(label="Play/Pause", emoji="⏯", style=discord.ButtonStyle.blurple)
                 async def toggle_playback_callback(self, button, interaction):
                     if self.vc._paused:
                         await self.vc.pause(False)
-                        await interaction.response.send_message(f"{interaction.user.name} resumed the music.", delete_after=5)
+                        embed = self.embed_message(msg=f"{interaction.user.name} resumed the music.", color="green")
+                        await interaction.response.send_message(embed=embed, delete_after=5)
                     else:
                         await self.vc.pause(True)
-                        await interaction.response.send_message(f"{interaction.user.name} paused the music.", delete_after=5)
+                        embed = self.embed_message(msg=f"{interaction.user.name} paused the music.", color="orange")
+                        await interaction.response.send_message(embed=embed, delete_after=5)
                 
                 @discord.ui.button(label="Skip", emoji="⏩", style=discord.ButtonStyle.blurple)
                 async def skip_callback(self, button, interaction):
                     await self.vc.skip()
-                    await interaction.response.send_message(f"{interaction.user.name} skipped the current song.", delete_after=5)
+                    embed = self.embed_message(msg=f"{interaction.user.name} skipped the current song.", color="blue")
+                    await interaction.response.send_message(embed=embed, delete_after=5)
                 
                 @discord.ui.button(label="Stop", emoji="⏹", style=discord.ButtonStyle.blurple)
                 async def stop_callback(self, button, interaction):
@@ -34,29 +47,26 @@ class PlayerControl(discord.ui.View):
                     self.vc.queue.clear()
                     await self.vc.stop()
                     await self.vc.disconnect()
-                    await interaction.response.send_message(f"{interaction.user.name} stopped the music.", delete_after=5)
+                    embed = self.embed_message(msg=f"{interaction.user.name} stopped the music.", color="red")
+                    await interaction.response.send_message(embed=embed, delete_after=5)
                     self.stop()
                 
                 @discord.ui.button(label="Queue", emoji="📃", style=discord.ButtonStyle.blurple)
                 async def queue_callback(self, button, interaction):
                     
-                    queue_msg = ""
-                    if not self.vc.queue.is_empty:
-                        for song in self.vc.queue:
-                            if song == self.vc.queue[0]:
-
-                                queue_msg += f"Coming up next:\n``{song}``\n\n"
-
-                                if len(self.vc.queue) > 1:
-
-                                    queue_msg += f"After that:\n"
-                            
-                            else:
-                                queue_msg += f"``{song}``\n"
+                    if self.vc.queue.is_empty:
+                        embed = discord.Embed(title="📃 Queue 📃", color=0x3093fd, description="There's nothing in queue! Use `/play` to add something!")
                     else:
-                        queue_msg += "There's nothing in queue! Use /play to add something!"
+                        embed = discord.Embed(title="📃 Queue 📃", color=0x3093fd, description="Coming up next:")
 
-                    return await interaction.response.send_message(queue_msg, delete_after=15)
+                        for song in self.vc.queue:
+                            if len(embed.fields) == 24:
+                                embed.add_field(name="More unlisted", value="...")
+                                break
+                            else:
+                                embed.add_field(name=song.title, value=song.author, inline=False)
+
+                    return await interaction.response.send_message(embed=embed, delete_after=15)
                 
                 @discord.ui.button(label="Radio Mode (Beta)", emoji="📻", style=discord.ButtonStyle.gray)
                 async def radio_callback(self, button, interaction):
@@ -82,7 +92,8 @@ class PlayerControl(discord.ui.View):
                 async def vol_callback(self, select, interaction):
                     new_volume = str(select.values[0]).split(" ")[1]
                     await self.vc.set_volume(int(new_volume))
-                    await interaction.response.send_message(f"{interaction.user.name} adjusted the volume to {new_volume}%.", delete_after=5)
+                    embed = self.embed_message(msg=f"{interaction.user.name} adjusted the volume to {new_volume}%.", color="blue")
+                    await interaction.response.send_message(embed=embed, delete_after=5)
 
 class Music(commands.Cog):
     # Inits the bot instance so we can do things like send messages and get other Discord information.
@@ -244,11 +255,13 @@ class Music(commands.Cog):
         if isinstance(tracks, wavelink.Playlist):
             # tracks is a playlist...
             added: int = await self.player.queue.put_wait(tracks)
-            await ctx.respond(f"Added the playlist **`{tracks.name}`** ({added} songs) to the queue.", delete_after=10)
+            embed = PlayerControl.embed_message(self=self, msg=f"Added the playlist **`{tracks.name}`** ({added} songs) to the queue.", color="green")
+            await ctx.respond(embed=embed, delete_after=10)
         else:
             track: wavelink.Playable = tracks[0]
             await self.player.queue.put_wait(track)
-            await ctx.respond(f"Added **`{track}`** to the queue.", delete_after=10)
+            embed = PlayerControl.embed_message(self=self, msg=f"Added **`{track}`** to the queue.", color="green")
+            await ctx.respond(embed=embed, delete_after=10)
         if not self.player.playing:
             # Play now since we aren't playing anything...
             await self.player.play(self.player.queue.get(), volume=50)

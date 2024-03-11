@@ -303,7 +303,7 @@ class AskGary(commands.Cog):
 
     # This is the slash command to generate images.
     @slash_command(name="image", description="Gary will use AI to generate an image with the given prompt!")
-    async def create_image(self, ctx, prompt: Option(str, description="What would you like Gary to create an image of?"), size: discord.Option(str, choices=["Square", "Portrait", "Landscape"], default="Square")):
+    async def create_image(self, ctx, prompt: Option(str, description="What would you like Gary to create an image of?"), size: discord.Option(str, choices=["Square", "Portrait", "Landscape"], default="Square")): # type: ignore
         openai_user = await get_openai_user(ctx)
 
         if openai_user == None:

@@ -565,7 +565,7 @@ class BBTCG(commands.Cog):
         plt.ylabel("Card Value in $")
         plt.tight_layout()
         plt.grid(visible=True)
-        plt.style.use("seaborn-darkgrid")
+        plt.style.use("seaborn-v0_8-darkgrid")
         plt.savefig(self.BBTCGdir + "graph.png")
 
         with open(self.BBTCGdir + "graph.png", "rb") as file:
