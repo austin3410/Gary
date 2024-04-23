@@ -5,7 +5,6 @@ from discord.ext import commands
 from discord.commands import slash_command, user_command, SlashCommandGroup
 from discord.ext.commands import Cooldown  # Importing the decorator that makes slash commands.
 from discord.ext.commands.core import cooldown, check, dynamic_cooldown
-#from discord.ui import Button, View
 from datetime import datetime, timedelta
 from discord import default_permissions
 import discord
@@ -566,7 +565,7 @@ class BBTCG(commands.Cog):
         plt.ylabel("Card Value in $")
         plt.tight_layout()
         plt.grid(visible=True)
-        plt.style.use("seaborn-darkgrid")
+        plt.style.use("seaborn-v0_8-darkgrid")
         plt.savefig(self.BBTCGdir + "graph.png")
 
         with open(self.BBTCGdir + "graph.png", "rb") as file:
