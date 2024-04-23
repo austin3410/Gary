@@ -105,7 +105,7 @@ class Music(commands.Cog):
     
     @commands.Cog.listener()
     async def on_ready(self):
-        nodes = wavelink.Node(uri="http://127.0.0.1:2333", password="youshallnotpass124",)
+        nodes = wavelink.Node(uri="http://127.0.0.1:2333", password=self.bot.lavalink_server_password)
         await wavelink.Pool.connect(nodes=[nodes], client=self.bot)
         print("Connected to Wavelink!")
         for channel in self.bot.get_all_channels():
@@ -166,7 +166,7 @@ class Music(commands.Cog):
         return
 
     @commands.Cog.listener()
-    async def on_wavelink_track_exception(self, payload: wavelink.TrackEndEventPayload) -> None:
+    async def on_wavelink_track_exception(self, payload) -> None:
         print("TRACK EXCEPTION")
     
     @commands.Cog.listener()

@@ -46,6 +46,8 @@ Wavelink Music
 Gary uses the Wavelink Python module for its music commands which requires a connection to a Lavalink Server.
 Running a Lavalink server is fairly straight forward and can be done by following `this <https://dsharpplus.github.io/DSharpPlus/articles/audio/lavalink/setup.html>`__ link.
 
+Ensure to stay up to day with the latest Lavalink server version available. This can change often due to backend changes done by YouTube which may break compatibility with Lavalink.
+
 FFMPEG Music
 ------------
 Note: I won't be providing any support for the FFMPEG cog. It's only being included because it's what Gary used to use.
