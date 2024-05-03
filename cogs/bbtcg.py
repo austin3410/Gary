@@ -464,7 +464,7 @@ class BBTCG(commands.Cog):
                         if ctx == None:
                             await disc_user.send(embed=embed)
                         else:
-                            await ctx.respond(embed=embed, ephemeral=True)
+                            await ctx.respond(embed=embed)
                 elif payload == False:
                     pass
             except Exception as e:

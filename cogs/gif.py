@@ -57,6 +57,7 @@ class Gif(commands.Cog):
                 self.clear_items()
                 await interaction.response.edit_message(content="I've sent your GIF.", embed=None, view=self)
                 self.stop()
+            
             # Goes forward 1 result or loops around to the first result.
             @button(custom_id="next", style=ButtonStyle.blurple, emoji="▶")
             async def next_result(self, button: discord.Button, interaction: discord.Interaction):

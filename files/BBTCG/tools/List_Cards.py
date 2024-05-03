@@ -19,9 +19,9 @@ for c in cards:
     elif c["rarity"] == "Common":
         common_count = common_count + 1
 
-print(leg_count)
-print(epic_count)
-print(rare_count)
-print(common_count)
+print(f"Legendary Cards: {leg_count}")
+print(f"Epic Cards: {epic_count}")
+print(f"Rare Cards: {rare_count}")
+print(f"Common Cards: {common_count}")
 total_count = leg_count + epic_count + rare_count + common_count
-print("Total: " + str(total_count))
+print(f"Total Cards: {total_count}")
