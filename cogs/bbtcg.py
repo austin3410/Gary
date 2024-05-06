@@ -709,7 +709,7 @@ class BBTCG(commands.Cog):
         try:
             amount = int(adjustuser_menu.value["amount"])
         except:
-            return await msg.edit_original_message(content=f"Amount must be in integer!", view=None)
+            return await msg.edit_original_response(content=f"Amount must be an integer!", view=None)
 
         if adjustuser_menu.value["action"] == "add":
             user["money"] += amount
@@ -723,9 +723,9 @@ class BBTCG(commands.Cog):
         saved_user = self.save_user(user)
 
         if saved_user == True:
-            return await msg.edit_original_message(content=f"Done! :white_check_mark:", view=None)
+            return await msg.edit_original_response(content=f"Done! :white_check_mark:", view=None)
         else:
-            return await msg.edit_original_message(content=f"An error occurred!", view=None)
+            return await msg.edit_original_response(content=f"An error occurred!", view=None)
     
     # ACHIEVEMENTS command - Send the user a list of all of their earned achievements.
     @slash_command(name="achievements", description="Shows you your current BBTCG Achievements.", 
